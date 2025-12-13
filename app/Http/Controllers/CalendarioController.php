@@ -30,7 +30,7 @@ class CalendarioController extends Controller
             'code' => 200,
             'calendarios' => $calendarios
         );
-        return response()->json($data, $data['code']);
+        return response()->json($data, $data['code'], [], JSON_UNESCAPED_UNICODE);
     }
 
     public function shows(Request $request){
