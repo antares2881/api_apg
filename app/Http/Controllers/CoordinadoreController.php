@@ -152,39 +152,45 @@ class CoordinadoreController extends Controller
     public function infoCoordinadores($id, $agrupacion){
         if($id == -1){
             if($agrupacion == 1){
-                $info = DB::select("SELECT lv.nombre_puesto, (SELECT SUM(meta_votacion) FROM coordinadores ) as meta_votacion, (SELECT COUNT(*) FROM coordinadores ) as total_coordinadores, (SELECT COUNT(*) FROM lideres ) as total_lideres, COUNT(lv.id) as total_militantes
+                $info = DB::select("SELECT lv.departamento_id, d.departamento, (SELECT SUM(meta_votacion) FROM coordinadores ) as meta_votacion, (SELECT COUNT(*) FROM coordinadores ) as total_coordinadores, (SELECT COUNT(*) FROM lideres ) as total_lideres, COUNT(lv.id) as total_militantes
                     FROM listadovotantes as lv
                     INNER JOIN lideres as l ON lv.lidere_id = l.id
                     LEFT JOIN sublideres as sl ON lv.sublidere_id = sl.id
                     INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
-                    WHERE lv.departamento_id = 13 AND lv.municipio_id = 1
-                    GROUP BY lv.nombre_puesto");
+					INNER JOIN departamentos as d ON lv.departamento_id = d.id
+                    WHERE lv.observacione_id != 4
+                    GROUP BY lv.departamento_id, d.departamento");
             }else{
-                $info = DB::select("SELECT lv.comuna, (SELECT SUM(meta_votacion) FROM coordinadores ) as meta_votacion, (SELECT COUNT(*) FROM coordinadores ) as total_coordinadores, (SELECT COUNT(*) FROM lideres ) as total_lideres, COUNT(lv.id) as total_militantes
+                $info = DB::select("SELECT lv.municipio_id, d.departamento, m.municipio, (SELECT SUM(meta_votacion) FROM coordinadores ) as meta_votacion, (SELECT COUNT(*) FROM coordinadores ) as total_coordinadores, (SELECT COUNT(*) FROM lideres ) as total_lideres, COUNT(lv.id) as total_militantes
                     FROM listadovotantes as lv
                     INNER JOIN lideres as l ON lv.lidere_id = l.id
                     LEFT JOIN sublideres as sl ON lv.sublidere_id = sl.id
                     INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
-                    WHERE lv.departamento_id = 13 AND lv.municipio_id = 1
-                    GROUP BY lv.comuna");
+					INNER JOIN departamentos as d ON lv.departamento_id = d.id
+                    INNER JOIN municipios as m ON lv.departamento_id = m.departamento_id AND lv.municipio_id = m.id
+                    WHERE lv.observacione_id != 4
+                    GROUP BY lv.municipio_id, d.departamento, m.municipio");
             }
         }else{
             if($agrupacion == 1){
-                $info = DB::select("SELECT lv.nombre_puesto, c.meta_votacion as meta_votacion, (SELECT COUNT(*) FROM lideres WHERE coordinadore_id = $id) as total_lideres, COUNT(lv.id) as total_militantes
+                $info = DB::select("SELECT lv.departamento_id, d.departamento, c.meta_votacion as meta_votacion, (SELECT COUNT(*) FROM lideres WHERE coordinadore_id = $id) as total_lideres, COUNT(lv.id) as total_militantes
                 FROM listadovotantes as lv
                 INNER JOIN lideres as l ON lv.lidere_id = l.id
                 LEFT JOIN sublideres as sl ON lv.sublidere_id = sl.id
                 INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
-                WHERE lv.departamento_id = 13 AND lv.municipio_id = 1 AND l.coordinadore_id = $id
-                GROUP BY lv.nombre_puesto");
+				INNER JOIN departamentos as d ON lv.departamento_id = d.id
+                WHERE l.coordinadore_id = $id AND Lv.observacione_id != 4
+                GROUP BY lv.departamento_id, d.departamento");
             }else{
-                $info = DB::select("SELECT lv.comuna, c.meta_votacion as meta_votacion, (SELECT COUNT(*) FROM lideres WHERE coordinadore_id = $id) as total_lideres, COUNT(lv.id) as total_militantes
+                $info = DB::select("SELECT lv.municipio_id, d.departamento, m.municipio, c.meta_votacion as meta_votacion, (SELECT COUNT(*) FROM lideres WHERE coordinadore_id = $id) as total_lideres, COUNT(lv.id) as total_militantes
                 FROM listadovotantes as lv
                 INNER JOIN lideres as l ON lv.lidere_id = l.id
                 LEFT JOIN sublideres as sl ON lv.sublidere_id = sl.id
                 INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
-                WHERE lv.departamento_id = 13 AND lv.municipio_id = 1 AND l.coordinadore_id = $id
-                GROUP BY lv.comuna");
+				INNER JOIN departamentos as d ON lv.departamento_id = d.id
+				INNER JOIN municipios as m ON lv.departamento_id = m.departamento_id AND lv.municipio_id = m.id
+                WHERE l.coordinadore_id = $id AND Lv.observacione_id != 4
+                GROUP BY lv.municipio_id, d.departamento, m.municipio");
             }
         }
 

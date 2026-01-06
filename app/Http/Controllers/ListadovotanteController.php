@@ -14,6 +14,7 @@ use App\Models\Ipreporte;
 use App\Models\Jurado;
 use App\Models\Listadovotante;
 use App\Models\Testigo;
+use Illuminate\Database\QueryException;
 
 class ListadovotanteController extends Controller
 {
@@ -111,13 +112,32 @@ class ListadovotanteController extends Controller
         $votante->mesa = $request->mesa;
         $votante->user_registra = Auth::user()->id;
 
-        $votante->save();
-        $data = array(
-            'status' => 'success',
-            'code' => 200,
-            'votante' => $votante
-        );
-        return response()->json($data, $data['code']);
+        try{
+            $votante->save();
+            $data = array(
+                'status' => 'success',
+                'code' => 200,
+                'votante' => $votante
+            );
+            return response()->json($data, $data['code']);
+        }catch(QueryException $e){
+            $errorCode = isset($e->errorInfo[1]) ? $e->errorInfo[1] : null;
+            if($errorCode == 1062){
+                $data = array(
+                    'status' => 'fail',
+                    'code' => 200,
+                    'message' => 'Este registro ya fue ingresado por este lider en la base de datos.'
+                );
+                return response()->json($data, $data['code']);
+            }
+            $data = array(
+                'status' => 'error',
+                'code' => 500,
+                'message' => 'Error al guardar el registro.',
+                'details' => $e->getMessage()
+            );
+            return response()->json($data, $data['code']);
+        }
     }
 
     public function update(request $request, $id){
