@@ -179,7 +179,7 @@ class CoordinadoreController extends Controller
                 LEFT JOIN sublideres as sl ON lv.sublidere_id = sl.id
                 INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
 				INNER JOIN departamentos as d ON lv.departamento_id = d.id
-                WHERE l.coordinadore_id = $id AND Lv.observacione_id != 4
+                WHERE l.coordinadore_id = $id AND lv.observacione_id != 4
                 GROUP BY lv.departamento_id, d.departamento");
             }else{
                 $info = DB::select("SELECT lv.municipio_id, d.departamento, m.municipio, c.meta_votacion as meta_votacion, (SELECT COUNT(*) FROM lideres WHERE coordinadore_id = $id) as total_lideres, COUNT(lv.id) as total_militantes
@@ -189,7 +189,7 @@ class CoordinadoreController extends Controller
                 INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
 				INNER JOIN departamentos as d ON lv.departamento_id = d.id
 				INNER JOIN municipios as m ON lv.departamento_id = m.departamento_id AND lv.municipio_id = m.id
-                WHERE l.coordinadore_id = $id AND Lv.observacione_id != 4
+                WHERE l.coordinadore_id = $id AND lv.observacione_id != 4
                 GROUP BY lv.municipio_id, d.departamento, m.municipio");
             }
         }
