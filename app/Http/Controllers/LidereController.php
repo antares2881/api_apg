@@ -124,11 +124,17 @@ class LidereController extends Controller
         $sublideres = DB::select("SELECT l.id as lidere_id, l.nombres as nombres_lider, l.apellidos as apellidos_lider, sl.id, sl.candidato_id, sl.nombres, sl.apellidos, sl.fecha_nac, sl.meta_votantes, sl.telefono, sl.direccion, sl.profesione_id, (SELECT COUNT(*) FROM listadovotantes as lv WHERE lv.sublidere_id = sl.id) as total_militantes
             FROM sublideres as sl 
             INNER JOIN lideres as l ON sl.lidere_id = l.id
-            WHERE l.id = $id AND l.candidato_id = $candidato");            
+            WHERE l.id = $id AND l.candidato_id = $candidato");
+
+            
 
         $lider = DB::select("SELECT l.id as lidere_id, l.nombres as nombres_lider, l.apellidos as apellidos_lider, l.id, l.candidato_id, l.nombres, l.apellidos, l.fecha_nac, l.meta_votantes, l.telefono, l.direccion, l.profesione_id, (SELECT COUNT(*) FROM listadovotantes as lv WHERE lv.lidere_id = l.id AND lv.sublidere_id = 0) as total_militantes
             FROM lideres as l 
             WHERE l.id = $id AND l.candidato_id = $candidato");
+
+        if(empty($sublideres) && !empty($lider)){
+            $sublideres = $lider;
+        }
 
         $data = array(
             'code' => 200,
