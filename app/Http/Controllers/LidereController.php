@@ -121,14 +121,23 @@ class LidereController extends Controller
     }
 
     public function getSubLideres($id, $candidato){
+        
+        $lider = array();
         $sublideres = DB::select("SELECT l.id as lidere_id, l.nombres as nombres_lider, l.apellidos as apellidos_lider, sl.id, sl.candidato_id, sl.nombres, sl.apellidos, sl.fecha_nac, sl.meta_votantes, sl.telefono, sl.direccion, sl.correo, sl.empleado, sl.profesione_id, (SELECT COUNT(*) FROM listadovotantes as lv WHERE lv.sublidere_id = sl.id) as total_militantes
             FROM sublideres as sl 
             INNER JOIN lideres as l ON sl.lidere_id = l.id
             WHERE l.id = $id AND l.candidato_id = $candidato");
+
+        if(empty($sublideres)){
+            $lider = DB::select("SELECT l.id as lidere_id, l.nombres as nombres_lider, l.apellidos as apellidos_lider
+            FROM lideres as l 
+            WHERE l.id = $id AND l.candidato_id = $candidato");
+        }
         $data = array(
             'code' => 200,
             'status' => 'success',
-            'sublideres' => $sublideres
+            'sublideres' => $sublideres,
+            'lider' => $lider
         );
         return response()->json($data, $data['code']);
     }
@@ -240,8 +249,6 @@ class LidereController extends Controller
         if($validator->fails()){
             return response()->json($validator->messages(), 200);
         }
-
-
 
         $cumple = explode("-", $request->fecha_nac);
 
