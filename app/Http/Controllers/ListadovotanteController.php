@@ -183,8 +183,6 @@ class ListadovotanteController extends Controller
         $votante->fecha_nac = $request->fecha_nac;
         $votante->direccion = $request->direccion;
         $votante->telefono = $request->telefono;
-        $votante->correo = $request->correo;
-        $votante->profesione_id = $request->profesione_id;
         $votante->departamento_id = $request->departamento_id;
         $votante->municipio_id = $request->municipio_id;
         $votante->zona = $request->zona;

@@ -61,7 +61,6 @@ class JuradoController extends Controller
             'celular' => 'required|min:10',
             'correo' => 'required|unique:jurados|email|string|max:255',
             'neducativo_id' => 'required',
-            'filiacionpolitica_id' => 'required',
             'tipoempleado_id' => 'required',
         ]);
 
@@ -82,10 +81,10 @@ class JuradoController extends Controller
         $jurado->departamento_id = $request->dpto;
         $jurado->municipio_id = $request->mcpio;
         $jurado->neducativo_id = $request->neducativo_id;
-        $jurado->filiacionpolitica_id = $request->filiacionpolitica_id;
+        $jurado->filiacionpolitica_id = 1;
         $jurado->tipoempleado_id = $request->tipoempleado_id;
-        $jurado->zona = $request->zona;
-        $jurado->puesto = $request->puesto;
+        $jurado->zona = null;
+        $jurado->puesto = null;
         $jurado->nombre_puesto = $request->nombre_puesto;
         $jurado->candidato_id = Auth::user()->candidato_id;
         $jurado->user_id = Auth::user()->id;
@@ -111,7 +110,6 @@ class JuradoController extends Controller
             'celular' => 'required|min:10',
             'correo' => 'required|email|string|max:255',
             'neducativo_id' => 'required',
-            'filiacionpolitica_id' => 'required',
             'tipoempleado_id' => 'required',
         ]);
 
@@ -130,10 +128,10 @@ class JuradoController extends Controller
         $jurado->celular = $request->celular;
         $jurado->correo = $request->correo;
         $jurado->neducativo_id = $request->neducativo_id;
-        $jurado->filiacionpolitica_id = $request->filiacionpolitica_id;
+        $jurado->filiacionpolitica_id = 1;
         $jurado->tipoempleado_id = $request->tipoempleado_id;
-        $jurado->zona = $request->zona;
-        $jurado->puesto = $request->puesto;
+        $jurado->zona = null;
+        $jurado->puesto = null;
         $jurado->nombre_puesto = $request->nombre_puesto;
         $jurado->candidato_id = Auth::user()->candidato_id;
         $jurado->user_id = Auth::user()->id;
