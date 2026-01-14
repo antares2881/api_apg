@@ -78,11 +78,11 @@ class Estadisticas2023Controller extends Controller
     }
 
     public function getPuestos($departamento, $municipio){
-        $puestos = DB::select("SELECT puesto FROM mmv20231113 
+        $puestos = DB::select("SELECT puesto FROM mmv20231113
 
-            WHERE municipio = ?
+            WHERE municipio = $municipio
             GROUP BY puesto
-            ORDER BY puesto ASC", [$municipio]);
+            ORDER BY puesto ASC");
         $data = array(
             'status' => 'success',
             'code' => 200,
