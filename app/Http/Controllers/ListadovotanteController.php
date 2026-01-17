@@ -42,12 +42,13 @@ class ListadovotanteController extends Controller
             $condicion = "AND lv.candidato_id = $candidato ";
         }
 
-        $votante = DB::select("SELECT lv.*, c.nombres as nombre_candidato, CONCAT(l.nombres,l.apellidos) as nombre_lider, u.name, d.departamento as desc_dpto, m.municipio as desc_mcpio
+        $votante = DB::select("SELECT lv.*, c.nombres as nombre_candidato, CONCAT(l.nombres,l.apellidos) as nombre_lider, u.name, d.departamento as desc_dpto, m.municipio as desc_mcpio, s.nombres as nombres_sublider, s.apellidos as apellidos_sublider
             FROM listadovotantes as lv 
             INNER JOIN departamentos as d ON lv.departamento_id = d.id
             INNER JOIN municipios as m ON lv.departamento_id = m.departamento_id AND lv.municipio_id = m.id
             INNER JOIN candidatos as c ON lv.candidato_id = c.id
             INNER JOIN lideres as l ON lv.lidere_id = l.id
+            LEFT JOIN sublideres as s ON lv.sublidere_id = s.id
             INNER JOIN users as u ON lv.user_registra = u.id
             WHERE lv.id = $cedula $condicion");        
 
