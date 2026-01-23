@@ -8,7 +8,7 @@ use App\Models\Departamento;
 class DepartamentoController extends Controller
 {
     public function index(){
-        $departamentos = Departamento::where('id', '<>', 88)->get();
+        $departamentos = Departamento::all();
         $data = array(
             'status' => 'success',
             'code' => 200,
