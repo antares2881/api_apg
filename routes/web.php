@@ -58,4 +58,6 @@ Route::get('puestos2022/{dpto}/{mcpio}', [Estadisticas2022Controller::class, 'ge
 Route::get('candidatos2022/{dpto}/{corporacion}/{partido}', [Estadisticas2022Controller::class, 'getCandidatos']);
 Route::get('/estadisticas2022/{corporacion}/{dpto}/{tipo_reporte}/{mun}/{par}/{can}/{puesto}', [Estadisticas2022Controller::class, 'estadisticas2022']);
 Route::get('departamentos', [DepartamentoController::class, 'index']);
+Route::get('departamentos/{id}', [DepartamentoController::class, 'show']);
+Route::get('get_municipio/{departamento_id}/{municipio_id}', [MunicipioController::class, 'get_municipio']);
 Route::get('municipios/{id}', [MunicipioController::class, 'show']);
