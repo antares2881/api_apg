@@ -215,7 +215,7 @@ class LidereController extends Controller
                 "code" => 200,
                 'error' => "Este lider ya esta creado para este candidato."
             );
-            return response()->json($data[0], $data['code']);
+            return response()->json($data, $data['code']);
         }
 
         //Validar si un sublider esta creado
@@ -230,7 +230,7 @@ class LidereController extends Controller
                 "code" => 200,
                 'error' => "Este Sublider ya esta creado para este candidato."
             );
-            return response()->json($data[0], $data['code']);
+            return response()->json($data, $data['code']);
         }
         
         $validator = \Validator::make($request->all(), [
