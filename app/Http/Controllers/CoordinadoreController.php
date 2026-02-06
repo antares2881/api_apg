@@ -123,7 +123,7 @@ class CoordinadoreController extends Controller
     }
 
     public function getLideres($coordinadore_id, $candidato){
-        $lideres = DB::select("SELECT c.id as coordinadore_id, c.nombres as nombres_coordinador, c.apellidos as apellidos_coordinador, l.id, l.candidato_id, l.nombres, l.apellidos, l.fecha_nac, l.meta_votantes, l.telefono, l.direccion, l.profesione_id, COUNT(s.id) as numero_sublideres, (SELECT COUNT(*) FROM listadovotantes as lv WHERE lv.lidere_id = l.id) as total_militantes
+        $lideres = DB::select("SELECT c.id as coordinadore_id, c.nombres as nombres_coordinador, c.apellidos as apellidos_coordinador, l.id, l.candidato_id, l.nombres, l.apellidos, l.fecha_nac, l.meta_votantes, l.telefono, l.direccion, l.profesione_id, COUNT(s.id) as numero_sublideres, (SELECT COUNT(*) FROM listadovotantes as lv WHERE lv.lidere_id = l.id AND lv.observacione_id = 1) as total_militantes
             FROM lideres as l 
             INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
             LEFT JOIN sublideres as s ON l.id = s.lidere_id
