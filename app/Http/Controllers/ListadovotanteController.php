@@ -351,10 +351,11 @@ class ListadovotanteController extends Controller
                 $condicion_in = "WHERE candidato_id = $candidato ";
             }
 
-            $repetidos = DB::select("SELECT lv.id, lv.nombres, lv.apellidos, c.nombres as candidato, l.nombres as nombre_lider, l.apellidos as apellidos_lider, lv.created_at as fecha_ingreso
+            $repetidos = DB::select("SELECT lv.id, lv.nombres, lv.apellidos, c.nombres as candidato, l.nombres as nombre_lider, l.apellidos as apellidos_lider, sl.nombres as nombre_sublider, sl.apellidos as apellidos_sublider, lv.created_at as fecha_ingreso
                 FROM listadovotantes as lv
                 INNER JOIN candidatos as c ON lv.candidato_id = c.id
                 INNER JOIN lideres as l ON lv.lidere_id = l.id
+                LEFT JOIN sublideres as sl ON lv.sublidere_id = sl.id
                 WHERE $condicion_general lv.id
                 IN (SELECT id
                 FROM listadovotantes
@@ -371,7 +372,8 @@ class ListadovotanteController extends Controller
                     $sheet->setCellValue("B$fila", $repetidos[$i]->nombres .' '.$repetidos[$i]->apellidos);
                     $sheet->setCellValue("C$fila", $repetidos[$i]->candidato);
                     $sheet->setCellValue("D$fila", $repetidos[$i]->nombre_lider . ' ' .$repetidos[$i]->apellidos_lider);
-                    $sheet->setCellValue("E$fila", $repetidos[$i]->fecha_ingreso);
+                    $sheet->setCellValue("E$fila", $repetidos[$i]->nombre_sublider . ' ' .$repetidos[$i]->apellidos_sublider);
+                    $sheet->setCellValue("F$fila", $repetidos[$i]->fecha_ingreso);
                     $fila++;
                 }
 
