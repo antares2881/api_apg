@@ -20,9 +20,9 @@ class ListadovotanteController extends Controller
 {
     public function index(){
         if(Auth::user()->role_id == 1){
-            $listadovotantes = Listadovotante::with('lider')->get();
+            $listadovotantes = Listadovotante::with('lider')->where('observacione_id', 1)->get();
         }else{
-            $listadovotantes = Listadovotante::with('lider')->where('candidato_id', Auth::user()->candidato_id)->get();
+            $listadovotantes = Listadovotante::with('lider')->where('candidato_id', Auth::user()->candidato_id)->where('observacione_id', 1)->get();
         }
         $data = array(
             'status' => 'success',
