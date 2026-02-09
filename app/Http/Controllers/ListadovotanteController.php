@@ -899,7 +899,7 @@ class ListadovotanteController extends Controller
             INNER JOIN departamentos as d ON lv.departamento_id = d.id
             INNER JOIN municipios as m ON lv.departamento_id = m.departamento_id AND lv.municipio_id = m.id
             $condicion_adicional
-            WHERE lv.candidato_id = ? AND lv.departamento_id = ?
+            WHERE lv.candidato_id = ? AND lv.departamento_id = ? AND lv.observacione_id = 1
             GROUP BY m.id, m.municipio
             ORDER BY total_votantes DESC", [$candidato_id, $dpto_id]);
 
