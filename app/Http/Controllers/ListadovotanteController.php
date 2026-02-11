@@ -202,7 +202,7 @@ class ListadovotanteController extends Controller
     }
 
     public function delete($id){
-        if(Auth::user()->role_id == 2){
+        if(Auth::user()->role_id == 1 || Auth::user()->role_id == 2){
             $votante = Listadovotante::find($id)->delete();
             $data = array(
                 'status' => 'success',
