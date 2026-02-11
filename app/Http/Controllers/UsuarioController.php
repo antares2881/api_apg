@@ -41,14 +41,26 @@ class UsuarioController extends Controller
                 ->get();
             
         }else{
-            $users = DB::table('users')
-                ->join('roles', 'users.role_id', '=', 'roles.id')
-                ->join('estados', 'users.estado_id', '=', 'estados.id')
-                ->Join('candidatos', 'users.candidato_id', '=', 'candidatos.id')
-                ->leftJoin('users_comandos', 'users.id', '=', 'users_comandos.user_id')
-                ->select('users.*', 'roles.role', 'candidatos.nombres as nombre_candidato', 'roles.id as role_id', 'estados.estado', 'users_comandos.comando_id') 
-                ->orderBy('nombre_candidato', 'DESC')
-                ->get();
+            if(Auth::user()->role_id == 6 ){
+                $coordinador_id = Auth::user()->id;
+                $users = DB::select('SELECT DISTINCT u.id, u.name, u.role_id, u.candidato_id, u.username, u.estado_id, r.role, can.nombres as nombre_candidato, e.estado, uc.comando_id  FROM users as u 
+                INNER JOIN lideres as l ON u.id = l.id
+                INNER JOIN roles as r ON u.role_id = r.id
+                INNER JOIN estados as e ON u.estado_id = e.id
+                INNER JOIN candidatos as can ON u.candidato_id = can.id
+                LEFT JOIN users_comandos as uc ON u.id = uc.user_id
+                WHERE l.coordinadore_id = ? AND u.id NOT IN (1, 2, 3, 4, 5, 6, 7, 8)', [$coordinador_id]);
+            }else{
+
+                $users = DB::table('users')
+                    ->join('roles', 'users.role_id', '=', 'roles.id')
+                    ->join('estados', 'users.estado_id', '=', 'estados.id')
+                    ->Join('candidatos', 'users.candidato_id', '=', 'candidatos.id')
+                    ->leftJoin('users_comandos', 'users.id', '=', 'users_comandos.user_id')
+                    ->select('users.*', 'roles.role', 'candidatos.nombres as nombre_candidato', 'roles.id as role_id', 'estados.estado', 'users_comandos.comando_id') 
+                    ->orderBy('nombre_candidato', 'DESC')
+                    ->get();
+            }
         }
 
         $data = array(
