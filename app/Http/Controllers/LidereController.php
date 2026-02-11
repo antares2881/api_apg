@@ -240,6 +240,7 @@ class LidereController extends Controller
             'direccion' => 'required',
             'telefono' => 'required',
             'meta_votantes' => 'required|numeric',
+            'coordinadore_id' => 'required_if:esSublider,1',
             
         ]);
 
