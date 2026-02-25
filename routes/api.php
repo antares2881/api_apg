@@ -92,7 +92,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::put('comandos/{id}', [ComandoController::class, 'update']);
 
     //Candidatos preconteo
-    Route::get('candidatos-preconteo/{municipio}', [PreconteoController::class, 'candidatos']);
+    Route::get('candidatos-preconteo/{corporacione_id}', [PreconteoController::class, 'candidatos']);
 
     Route::get('mi-candidato', [CandidatoController::class, 'miCandidato']);
     
@@ -124,6 +124,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     
     //Divipole preconteos
     Route::get('divipole-preconteos/{dpto}/{mcpio}', [DivipolepreconteoController::class, 'puestos_divipoles']);
+    Route::get('divipole-preconteos/{dpto}', [DivipolepreconteoController::class, 'municipios_divipoles']);
     Route::post('mostrar-mesas-preconteo', [DivipolepreconteoController::class, 'mostrar_mesas']);
 
     //Estadisticas 2019
@@ -205,7 +206,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     //Preconteo
     Route::post('preconteo', [PreconteoController::class, 'store']);
     Route::post('edit-preconteo', [PreconteoController::class, 'update']);
-    Route::get('preconteo-resultados-general/{mcpio}', [PreconteoController::class, 'resultados_general']);
+    Route::get('preconteo-resultados-general/{corporacione_id}', [PreconteoController::class, 'resultados_general']);
     Route::get('preconteo-puestos-informados/{dpto}/{mcpio}', [PreconteoController::class, 'puestos_informados']);
     Route::post('preconteo-mostrar-mesas', [PreconteoController::class, 'mesas_informadas']);
     Route::get('preconteo-votacion-mesa/{id}', [PreconteoController::class, 'votacion_mesa']);

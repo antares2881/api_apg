@@ -265,12 +265,24 @@ class ReportesController extends Controller
     public function reporteVotantesRepetidos($corporacion){
 
         $condicion_general = "";
-        $condicion_in = "";
-        $candidato = Auth::user()->candidato_id;
+        $condicion_subquery = "";
+        $condicion_lider = "";
+        $usuario = Auth::user();
+        $candidato = $usuario->candidato_id;
 
         if($corporacion == 5){
             $condicion_general = "lv.candidato_id = $candidato AND ";
-            $condicion_in = "WHERE candidato_id = $candidato ";
+            $condicion_subquery = "WHERE candidato_id = $candidato ";
+        }
+
+        if($usuario->role_id == 5){
+            $lider_id = $usuario->id;
+
+            if($condicion_subquery == ""){
+                $condicion_lider = "AND lv.id IN (SELECT id FROM listadovotantes WHERE lidere_id = $lider_id)";
+            }else{
+                $condicion_lider = "AND lv.id IN (SELECT id FROM listadovotantes WHERE candidato_id = $candidato AND lidere_id = $lider_id)";
+            }
         }
 
         $repetidos = DB::select("SELECT lv.id, lv.nombres, lv.apellidos, c.nombres as candidato, l.nombres as nombre_lider, l.apellidos as apellidos_lider, lv.created_at as fecha_ingreso
@@ -280,10 +292,11 @@ class ReportesController extends Controller
             WHERE $condicion_general lv.id
             IN (SELECT id
             FROM listadovotantes
-            $condicion_in
+            $condicion_subquery
             GROUP BY id
-            HAVING count(id) >1)
-            ORDER BY nombres, fecha_ingreso");
+            HAVING COUNT(DISTINCT lidere_id) > 1)
+            $condicion_lider
+            ORDER BY lv.id, fecha_ingreso");
 
         $data = array(
             'status' => 'success',

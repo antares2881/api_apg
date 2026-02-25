@@ -14,8 +14,8 @@ use App\Models\Preconteo;
 
 class PreconteoController extends Controller
 {
-    public function candidatos($municipio){
-        $candidatos = DB::select("SELECT * FROM preconteocandidatos WHERE municipio_id = $municipio");
+    public function candidatos($corporacione_id){
+        $candidatos = DB::select("SELECT * FROM preconteocandidatos WHERE corporacione_id = $corporacione_id");
         $data = array(
             'status' => 'success',
             'code' => 200,
@@ -144,10 +144,10 @@ class PreconteoController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    public function resultados_general($mcpio){
+    public function resultados_general($corporacione_id){
 
         $resultados = DB::select("SELECT pp.partido, pc.nombres, pc.apellidos, SUM(p.total_votos) as total, 
-        (SELECT COUNT(*) FROM divipolepreconteos WHERE cod_mcpio = $mcpio) as total_mesas,
+        (SELECT COUNT(*) FROM divipolepreconteos) as total_mesas,
         (SELECT COUNT(DISTINCT divipolepreconteo_id) FROM preconteos  ) as mesas_informadas
         FROM preconteos as p 
         INNER JOIN divipolepreconteos as dp ON p.divipolepreconteo_id = dp.id
