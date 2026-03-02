@@ -351,29 +351,51 @@ class ListadovotanteController extends Controller
                 $condicion_in = "WHERE candidato_id = $candidato ";
             }
 
-            $repetidos = DB::select("SELECT lv.id, lv.nombres, lv.apellidos, c.nombres as candidato, l.nombres as nombre_lider, l.apellidos as apellidos_lider, sl.nombres as nombre_sublider, sl.apellidos as apellidos_sublider, lv.created_at as fecha_ingreso
-                FROM listadovotantes as lv
-                INNER JOIN candidatos as c ON lv.candidato_id = c.id
-                INNER JOIN lideres as l ON lv.lidere_id = l.id
-                LEFT JOIN sublideres as sl ON lv.sublidere_id = sl.id
-                WHERE $condicion_general lv.id
-                IN (SELECT id
-                FROM listadovotantes
-                $condicion_in
-                GROUP BY id
-                HAVING count(id) >1)
-                ORDER BY nombres, fecha_ingreso");
+            $repetidos = DB::select("SELECT
+                lv.id,
+                MAX(lv.candidato_id)    AS candidato_id,
+                MAX(lv.nombres)         AS votante_nombres,
+                MAX(lv.apellidos)       AS votante_apellidos,
+                MAX(lv.telefono)        AS votante_telefono,
+                MAX(lv.direccion)       AS votante_direccion,
+                MAX(lv.nombre_puesto)   AS nombre_puesto,
+                MAX(lv.mesa)            AS mesa,
+                GROUP_CONCAT(
+                DISTINCT CONCAT(IFNULL(l.nombres,''), ' ', IFNULL(l.apellidos,''))
+                ORDER BY l.nombres, l.apellidos
+                SEPARATOR ' | '
+                ) AS lideres,
+                GROUP_CONCAT(
+                DISTINCT CONCAT(IFNULL(sl.nombres,''), ' ', IFNULL(sl.apellidos,''))
+                ORDER BY sl.nombres, sl.apellidos
+                SEPARATOR ' | '
+                ) AS sublideres
+
+                FROM listadovotantes lv
+                LEFT JOIN lideres l ON l.id = lv.lidere_id
+                LEFT JOIN sublideres sl ON sl.id = lv.sublidere_id
+                WHERE lv.id IN (
+                    SELECT id
+                    FROM listadovotantes
+                    GROUP BY id
+                    HAVING COUNT(*) >= 2
+                )
+                GROUP BY lv.id
+                ORDER BY lv.id ASC;");
 
                 $spreadsheet = IOFactory::load('plantillas/repetidos.xlsx');
                 $sheet = $spreadsheet->getSheetByName('Repetidos');
                 $fila = 2;
                 for ($i=0; $i < count($repetidos) ; $i++) { 
                     $sheet->setCellValue("A$fila", $repetidos[$i]->id);
-                    $sheet->setCellValue("B$fila", $repetidos[$i]->nombres .' '.$repetidos[$i]->apellidos);
-                    $sheet->setCellValue("C$fila", $repetidos[$i]->candidato);
-                    $sheet->setCellValue("D$fila", $repetidos[$i]->nombre_lider . ' ' .$repetidos[$i]->apellidos_lider);
-                    $sheet->setCellValue("E$fila", $repetidos[$i]->nombre_sublider . ' ' .$repetidos[$i]->apellidos_sublider);
-                    $sheet->setCellValue("F$fila", $repetidos[$i]->fecha_ingreso);
+                    $sheet->setCellValue("B$fila", $repetidos[$i]->votante_nombres);
+                    $sheet->setCellValue("C$fila", $repetidos[$i]->votante_apellidos);
+                    $sheet->setCellValue("D$fila", $repetidos[$i]->votante_telefono);
+                    $sheet->setCellValue("E$fila", $repetidos[$i]->votante_direccion);
+                    $sheet->setCellValue("F$fila", $repetidos[$i]->nombre_puesto);
+                    $sheet->setCellValue("G$fila", $repetidos[$i]->mesa);
+                    $sheet->setCellValue("H$fila", $repetidos[$i]->lideres);
+                    $sheet->setCellValue("I$fila", $repetidos[$i]->sublideres);
                     $fila++;
                 }
 

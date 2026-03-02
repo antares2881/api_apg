@@ -64,6 +64,21 @@ class CoordinadoreController extends Controller
 
             $condicion_sublider = ($sublider == -1) ? '' : "AND lv.sublidere_id = $sublider";
 
+            $condicion_divipole = '';
+            $tipo = $request->query('tipo');
+            $departamento_id = $request->query('departamento_id');
+            $municipio_id = $request->query('municipio_id');
+
+            if($tipo === 'divipole'){
+                if(!empty($departamento_id) && $departamento_id != -1 && $departamento_id != 'undefined'){
+                    $condicion_divipole .= " AND lv.departamento_id = " . (int)$departamento_id;
+                }
+
+                if(!empty($municipio_id) && $municipio_id != -1 && $municipio_id != 'undefined'){
+                    $condicion_divipole .= " AND lv.municipio_id = " . (int)$municipio_id;
+                }
+            }
+
 
             $votantes = DB::select("SELECT o.observacion, ca.nombres as candidato, c.nombres as nom_coordinador, c.apellidos as ape_coordinador, l.nombres as nom_lider, l.apellidos as ape_lider, sl.nombres as nom_sublider, sl.apellidos as ape_sublider, lv.nombres, lv.apellidos, lv.fecha_nac, lv.id, lv.direccion, d.departamento, m.municipio, lv.nombre_puesto, lv.mesa, lv.telefono, lv.created_at as fecha_ingreso
                 FROM listadovotantes as lv 
@@ -74,7 +89,7 @@ class CoordinadoreController extends Controller
                 LEFT JOIN sublideres as sl ON lv.sublidere_id = sl.id
                 LEFT JOIN coordinadores as c ON l.coordinadore_id = c.id AND l.candidato_id = c.candidato_id
                 INNER JOIN observaciones as o ON lv.observacione_id = o.id
-                WHERE lv.candidato_id = $candidato $condicion $condicion_sublider
+                WHERE lv.candidato_id = $candidato $condicion $condicion_sublider $condicion_divipole
                 ORDER BY $order  ASC");
 
             $spreadsheet = IOFactory::load('plantillas/votantes.xlsx');

@@ -121,16 +121,19 @@ class AsistenciaController extends Controller
     }
 
     public function votantes_comando($id, $comando, $role){
+        
 
-        $condicion = "";
+        $confirmados = DB::select(
+            "SELECT a.*, c.nombre FROM comandos AS c INNER JOIN asistencias AS a ON c.id = a.comando_id WHERE c.id = ? ORDER BY a.zona ASC, a.puesto ASC, a.mesa ASC",
+            [(int) $id]
+        );
+        
 
-        if($role == 10 ){
-            $condicion = "WHERE c.id = $id ";
-        }
+        $spreadsheet = IOFactory::load(public_path('plantillas/reporte_confirmados_comando.xlsx'));
+        $sheet = $spreadsheet->sheetNameExists('Hoja1')
+            ? $spreadsheet->getSheetByName('Hoja1')
+            : $spreadsheet->getActiveSheet();
 
-        $confirmados = DB::select("SELECT a.*, c.nombre FROM comandos AS c INNER JOIN asistencias AS a ON c.id = a.comando_id WHERE c.id = $id ORDER BY a.zona ASC, a.puesto ASC, a.mesa ASC");
-        $spreadsheet = IOFactory::load('plantillas/reporte_confirmados_comando.xlsx');
-        $sheet = $spreadsheet->getSheetByName('Hoja1');
         $sheet->setCellValue("B1", $comando);
         $fila = 3;
         for ($i=0; $i < count($confirmados) ; $i++) { 
@@ -143,13 +146,14 @@ class AsistenciaController extends Controller
             $fila++;
         }
 
-        $filename = 'votantes_confirmados'.time().'.xls';
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="'.$filename.'"');
-        header('Cache-Control: max-age=0');
+        $filename = 'votantes_confirmados_'.time().'.xlsx';
 
-        $writer = IOFactory::createWriter($spreadsheet, 'Xls');
-        $writer->save('php://output');
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
     
 }

@@ -210,9 +210,16 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('preconteo-puestos-informados/{dpto}/{mcpio}', [PreconteoController::class, 'puestos_informados']);
     Route::post('preconteo-mostrar-mesas', [PreconteoController::class, 'mesas_informadas']);
     Route::get('preconteo-votacion-mesa/{id}', [PreconteoController::class, 'votacion_mesa']);
-    Route::get('preconteo-mesas-faltantes/{dpto}/{mcpio}', [PreconteoController::class, 'mesas_faltantes']);
+    Route::get('preconteo-mesas-faltantes/{dpto}', [PreconteoController::class, 'mesas_faltantes_dpto']);
+    Route::get('preconteo-mesas-faltantes/{dpto}/{mcpio}', [PreconteoController::class, 'mesas_faltantes_mcpio']);
     Route::post('preconteo-mesas-faltantes', [PreconteoController::class, 'mesas_faltantes_puesto']);
 
+    //preconteo divipole
+    Route::get('preconteo-dpto/', [PreconteoController::class, 'departamentos']);
+    Route::get('preconteo-mcpio/{dpto}', [PreconteoController::class, 'municipios']);
+    Route::get('preconteo-comuna/{dpto}/{mcpio}', [PreconteoController::class, 'comunas']);
+    Route::get('preconteo-puesto/{dpto}/{mcpio}', [PreconteoController::class, 'puestos']);
+    
     Route::get('profesiones', [ProfesioneController::class, 'index']);
     Route::post('profesiones', [ProfesioneController::class, 'store']);
 
@@ -230,6 +237,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::post('reporte-firmas-validas', [ReportesController::class, 'reporteFirmasValidas']);
     Route::post('reporte-firmas-novalidas', [ReportesController::class, 'reporteFirmasNoValidas']);
     Route::get('reporte-votantes-repetidos/{corporacion}', [ReportesController::class, 'reporteVotantesRepetidos']);
+    Route::get('reporte-repetidos-admin', [ReportesController::class, 'reportes_repetidos_admin']);
 
     //Reporte de IPS
     Route::get('ipreportes', [IpreporteController::class, 'index']);

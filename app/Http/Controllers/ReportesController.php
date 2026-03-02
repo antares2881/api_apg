@@ -262,6 +262,46 @@ class ReportesController extends Controller
         return response()->json($data, $data['code']);
     }
 
+    public function reportes_repetidos_admin(){
+        $registros = DB::select("SELECT
+            lv.id,
+            MAX(lv.nombres)         AS votante_nombres,
+            MAX(lv.apellidos)       AS votante_apellidos,
+            MAX(lv.telefono)        AS votante_telefono,
+            MAX(lv.direccion)       AS votante_direccion,
+            MAX(lv.nombre_puesto)   AS nombre_puesto,
+            MAX(lv.mesa)            AS mesa,
+            GROUP_CONCAT(
+            DISTINCT CONCAT(IFNULL(l.nombres,''), ' ', IFNULL(l.apellidos,''))
+            ORDER BY l.nombres, l.apellidos
+            SEPARATOR ' | '
+            ) AS lideres,
+            GROUP_CONCAT(
+            DISTINCT CONCAT(IFNULL(sl.nombres,''), ' ', IFNULL(sl.apellidos,''))
+            ORDER BY sl.nombres, sl.apellidos
+            SEPARATOR ' | '
+            ) AS sublideres
+
+            FROM listadovotantes lv
+            LEFT JOIN lideres l ON l.id = lv.lidere_id
+            LEFT JOIN sublideres sl ON sl.id = lv.sublidere_id
+            WHERE lv.id IN (
+                SELECT id
+                FROM listadovotantes
+                GROUP BY id
+                HAVING COUNT(*) >= 2
+            )
+            GROUP BY lv.id
+            ORDER BY lv.id ASC");
+
+        $data = array(
+            'status' => 'success',
+            'code' => 200,
+            'repetidos' => $registros
+        );
+        return response()->json($data, $data['code']);
+    }
+
     public function reporteVotantesRepetidos($corporacion){
 
         $condicion_general = "";

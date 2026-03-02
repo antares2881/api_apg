@@ -32,7 +32,13 @@ Route::get('imprimir-excel/{token}/{fecha_i}/{fecha_f}', [FirmaController::class
 Route::get('imprimir-votantes-general/{token}/{tipo}', [ListadovotanteController::class, 'excel_votantes_general']);
 Route::get('imprimir-votantes-repetidos/{token}', [ListadovotanteController::class, 'excel_votantes_repetidos']);
 Route::get('excel-lideres/{token}', [LidereController::class, 'excel_lideres']);
-Route::get('excel-coordinadores/{token}/{coordinador}/{lider}/{sublider}', [CoordinadoreController::class, 'excel_coordinadores']);
+Route::get('excel-coordinadores/{token}/{coordinador}/{lider}/{sublider?}', [CoordinadoreController::class, 'excel_coordinadores'])
+	->where([
+		'coordinador' => '-?[0-9]+|undefined',
+		'lider' => '-?[0-9]+|undefined',
+		'sublider' => '-?[0-9]+|undefined',
+	])
+	->defaults('sublider', -1);
 
 route::get('reporte-esperados/{dpto}/{mcpio}/{zona}/{puesto}/{nombre_puesto}', [ListadovotanteController::class, 'votantes_esperados_puesto']);
 route::get('reporte-confirmados/{dpto}/{mcpio}/{zona}/{puesto}/{nombre_puesto}/{comando_id}', [ListadovotanteController::class, 'votantes_confirmados_puesto']);

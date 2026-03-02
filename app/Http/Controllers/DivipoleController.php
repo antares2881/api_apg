@@ -87,20 +87,71 @@ class DivipoleController extends Controller
 
     public function puestos_divipoles($dpto, $mcpio, $comando_id){
 
-        $condicion_comando = "";
-        
-        if(Auth::user()->role_id > 2){
-            
-            $condicion_comando = "AND a.comando_id = $comando_id";
+        $dpto = (int) $dpto;
+        $mcpio = (int) $mcpio;
+        $comandoId = is_null($comando_id) ? null : (int) $comando_id;
+
+        $condicionComando = "";
+        $params = [];
+
+        if (!is_null($comandoId) && $comandoId > 0) {
+            $condicionComando = " AND a.comando_id = ?";
+            $params[] = $comandoId;
         }
 
-        $puestos = DB::select("SELECT d.zona, d.puesto, d.nombre_puesto, d.mesas, COUNT(a.puesto) as confirmados, 
-        (SELECT COUNT(DISTINCT id) FROM listadovotantes as lv WHERE d.departamento_id = lv.departamento_id AND d.municipio_id = lv.municipio_id AND d.zona = lv.zona AND d.puesto = lv.puesto AND lv.observacione_id = 1) as esperados
+        if ($dpto === -1 && $mcpio === -1) {
+            $sql = "SELECT d.departamento_id, dp.departamento, COUNT(a.id) as confirmados,
+                    (SELECT COUNT(DISTINCT lv.id)
+                        FROM listadovotantes as lv
+                        WHERE lv.departamento_id = d.departamento_id
+                          AND lv.observacione_id = 1) as esperados
                     FROM divipoles as d
-            LEFT JOIN asistencias as a ON d.zona = a.zona AND d.puesto = a.puesto $condicion_comando
-                    WHERE d.departamento_id = $dpto AND d.municipio_id = $mcpio
-            GROUP BY d.zona, d.puesto, d.nombre_puesto, d.mesas
-            ORDER BY d.zona, d.puesto");
+                    INNER JOIN departamentos as dp ON d.departamento_id = dp.id
+                    LEFT JOIN asistencias as a ON d.departamento_id = a.departamento_id
+                        AND d.municipio_id = a.municipio_id
+                        AND d.zona = a.zona
+                        AND d.puesto = a.puesto{$condicionComando}
+                    GROUP BY d.departamento_id, dp.departamento
+                    ORDER BY dp.departamento";
+        } elseif ($dpto > 0 && $mcpio === -1) {
+            $sql = "SELECT d.departamento_id, d.municipio_id, m.municipio, COUNT(a.id) as confirmados,
+                    (SELECT COUNT(DISTINCT lv.id)
+                        FROM listadovotantes as lv
+                        WHERE lv.departamento_id = d.departamento_id
+                          AND lv.municipio_id = d.municipio_id
+                          AND lv.observacione_id = 1) as esperados
+                    FROM divipoles as d
+                    INNER JOIN municipios as m ON d.departamento_id = m.departamento_id AND d.municipio_id = m.id
+                    LEFT JOIN asistencias as a ON d.departamento_id = a.departamento_id
+                        AND d.municipio_id = a.municipio_id
+                        AND d.zona = a.zona
+                        AND d.puesto = a.puesto{$condicionComando}
+                    WHERE d.departamento_id = ?
+                    GROUP BY d.departamento_id, d.municipio_id, m.municipio
+                    ORDER BY m.municipio";
+            $params[] = $dpto;
+        } else {
+            $sql = "SELECT d.zona, d.puesto, d.nombre_puesto, d.mesas, COUNT(a.id) as confirmados,
+                    (SELECT COUNT(DISTINCT lv.id)
+                        FROM listadovotantes as lv
+                        WHERE lv.departamento_id = d.departamento_id
+                          AND lv.municipio_id = d.municipio_id
+                          AND lv.zona = d.zona
+                          AND lv.puesto = d.puesto
+                          AND lv.observacione_id = 1) as esperados
+                    FROM divipoles as d
+                    LEFT JOIN asistencias as a ON d.departamento_id = a.departamento_id
+                        AND d.municipio_id = a.municipio_id
+                        AND d.zona = a.zona
+                        AND d.puesto = a.puesto{$condicionComando}
+                    WHERE d.departamento_id = ? AND d.municipio_id = ?
+                    GROUP BY d.zona, d.puesto, d.nombre_puesto, d.mesas, d.departamento_id, d.municipio_id
+                    ORDER BY d.zona, d.puesto";
+            $params[] = $dpto;
+            $params[] = $mcpio;
+        }
+
+        $puestos = DB::select($sql, $params);
 
         $data = array(
             'status' => 'success',

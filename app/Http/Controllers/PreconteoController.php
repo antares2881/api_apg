@@ -11,6 +11,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use \PhpOffice\PhpSpreadsheet\Style\Fill;
 
 use App\Models\Preconteo;
+use App\Models\Preconteo_observacione;
+use App\Models\Preconteo_votacione;
 
 class PreconteoController extends Controller
 {
@@ -20,6 +22,46 @@ class PreconteoController extends Controller
             'status' => 'success',
             'code' => 200,
             'candidatos' => $candidatos
+        );
+        return response()->json($data, $data['code']);
+    }
+
+    public function departamentos(){
+        $departamentos = DB::select("SELECT dpto FROM divipolepreconteos GROUP BY dpto, dpto ORDER BY dpto ASC");
+        $data = array(
+            'status' => 'success',
+            'code' => 200,
+            'departamentos' => $departamentos
+        );
+        return response()->json($data, $data['code']);
+    }
+
+    public function municipios($dpto){
+        $municipios = DB::select("SELECT mcpio FROM divipolepreconteos WHERE dpto = '".$dpto."' GROUP BY mcpio, mcpio ORDER BY mcpio ASC");
+        $data = array(
+            'status' => 'success',
+            'code' => 200,
+            'municipios' => $municipios
+        );
+        return response()->json($data, $data['code']);
+    }
+
+    public function comunas($dpto, $mcpio){
+        $comunas = DB::select("SELECT comuna FROM divipolepreconteos WHERE dpto = '".$dpto."' AND mcpio = '".$mcpio."' GROUP BY comuna, comuna ORDER BY comuna ASC");
+        $data = array(
+            'status' => 'success',
+            'code' => 200,
+            'comunas' => $comunas
+        );
+        return response()->json($data, $data['code']);
+    }
+
+    public function puestos($dpto, $mcpio){
+        $puestos = DB::select("SELECT puesto FROM divipolepreconteos WHERE dpto = '".$dpto."' AND mcpio = '".$mcpio."' GROUP BY puesto, puesto ORDER BY puesto ASC");
+        $data = array(
+            'status' => 'success',
+            'code' => 200,
+            'puestos' => $puestos
         );
         return response()->json($data, $data['code']);
     }
@@ -43,7 +85,25 @@ class PreconteoController extends Controller
         return response()->json($data, $data['code']); 
     }
 
-    public function mesas_faltantes($dpto, $mcpio){
+    public function mesas_faltantes_dpto($dpto){
+
+        $faltantes = DB::select("SELECT dp.cod_mcpio, dp.mcpio, COUNT(dp.mesa) as faltantes 
+        FROM divipolepreconteos as dp 
+        LEFT JOIN preconteos as p ON dp.id = p.divipolepreconteo_id 
+        WHERE dp.cod_dpto = $dpto AND p.divipolepreconteo_id IS NULL
+        GROUP BY dp.cod_mcpio, dp.mcpio
+        ORDER BY dp.cod_mcpio ASC");
+
+        $data = array(
+            'status' => 'success',
+            'code' => 200,
+            'mesas_faltantes' => $faltantes
+        );
+
+        return response()->json($data, $data['code']);
+    }
+
+    public function mesas_faltantes_mcpio($dpto, $mcpio){
 
         $faltantes = DB::select("SELECT dp.cod_dpto, dp.cod_mcpio, dp.mcpio, dp.cod_zona, dp.cod_puesto, dp.puesto, COUNT(dp.mesa) as faltantes 
         FROM divipolepreconteos as dp 
@@ -84,12 +144,13 @@ class PreconteoController extends Controller
     public function preconteo_general(){
 
         $general = DB::select("SELECT dp.cod_dpto, dp.cod_mcpio, dp.cod_zona, dp.cod_puesto, dp.dpto, dp.mcpio, dp.puesto, dp.mesa, 
-        p.id, p.numero_sufragantes, p.total_votos, p.numero_firmas, p.tachaduras, p.reconteo_votos, p.observaciones, p.created_at,
+        p.id, p.numero_sufragantes, pv.total_votos, p.numero_firmas, p.tachaduras, p.reconteo_votos, p.observaciones, p.created_at,
         pc.nombres, pc.apellidos, 
         pp.partido 
         FROM preconteos as p
         INNER JOIN divipolepreconteos as dp ON p.divipolepreconteo_id = dp.id
-        INNER JOIN preconteocandidatos as pc ON p.preconteocandidato_id = pc.id
+        INNER JOIN preconteo_votaciones as pv ON p.id = pv.preconteo_id
+        INNER JOIN preconteocandidatos as pc ON pv.preconteocandidato_id = pc.id
         INNER JOIN preconteopartidos as pp ON pc.preconteopartido_id = pp.id
         ORDER BY dp.cod_zona, dp.cod_puesto, dp.mesa ASC");
 
@@ -144,17 +205,73 @@ class PreconteoController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    public function resultados_general($corporacione_id){
+    public function resultados_general(Request $request, $corporacione_id){
 
-        $resultados = DB::select("SELECT pp.partido, pc.nombres, pc.apellidos, SUM(p.total_votos) as total, 
-        (SELECT COUNT(*) FROM divipolepreconteos) as total_mesas,
-        (SELECT COUNT(DISTINCT divipolepreconteo_id) FROM preconteos  ) as mesas_informadas
-        FROM preconteos as p 
+        $dpto = $request->query('dpto');
+        $mcpio = $request->query('mcpio');
+        $puesto = $request->query('puesto');
+        $comuna = $request->query('comuna');
+
+        $filtro_main = '';
+        $filtro_total_mesas = '';
+        $filtro_mesas_informadas = '';
+
+        if(!empty($dpto) && $dpto != -1 && $dpto != 'undefined'){
+            $nom_dpto = str_replace("'", "''", $dpto);
+            $filtro_main .= " AND dp.dpto = '$nom_dpto'";
+            $filtro_total_mesas .= " AND dp_total.dpto = '$nom_dpto'";
+            $filtro_mesas_informadas .= " AND dp2.dpto = '$nom_dpto'";
+        }
+
+        if(!empty($mcpio) && $mcpio != -1 && $mcpio != 'undefined'){
+            $nom_mcpio = str_replace("'", "''", $mcpio);
+            $filtro_main .= " AND dp.mcpio = '$nom_mcpio'";
+            $filtro_total_mesas .= " AND dp_total.mcpio = '$nom_mcpio'";
+            $filtro_mesas_informadas .= " AND dp2.mcpio = '$nom_mcpio'";
+        }
+
+        if(!empty($puesto) && $puesto != -1 && $puesto != 'undefined'){
+            $nom_puesto = str_replace("'", "''", $puesto);
+            $filtro_main .= " AND dp.puesto = '$nom_puesto'";
+            $filtro_total_mesas .= " AND dp_total.puesto = '$nom_puesto'";
+            $filtro_mesas_informadas .= " AND dp2.puesto = '$nom_puesto'";
+        }
+
+        if(!empty($comuna) && $comuna != -1 && $comuna != 'undefined'){
+            $nom_comuna = str_replace("'", "''", $comuna);
+            $filtro_main .= " AND dp.comuna = '$nom_comuna'";
+            $filtro_total_mesas .= " AND dp_total.comuna = '$nom_comuna'";
+            $filtro_mesas_informadas .= " AND dp2.comuna = '$nom_comuna'";
+        }
+
+        $resultados = DB::select("SELECT pp.partido, pc.nombres, pc.apellidos, SUM(pv.total_votos) as total
+        FROM preconteos as p
         INNER JOIN divipolepreconteos as dp ON p.divipolepreconteo_id = dp.id
-        INNER JOIN preconteocandidatos as pc ON p.preconteocandidato_id = pc.id
+        INNER JOIN preconteo_votaciones as pv ON p.id = pv.preconteo_id
+        INNER JOIN preconteocandidatos as pc ON pv.preconteocandidato_id = pc.id
         INNER JOIN preconteopartidos as pp ON pc.preconteopartido_id = pp.id
+        WHERE pc.corporacione_id = $corporacione_id $filtro_main
         GROUP BY pp.partido, pc.nombres, pc.apellidos
         ORDER BY total DESC");
+
+        $total_mesas_result = DB::select("SELECT COUNT(*) as total_mesas
+        FROM divipolepreconteos as dp_total
+        WHERE 1 = 1 $filtro_total_mesas");
+
+        $mesas_informadas_result = DB::select("SELECT COUNT(DISTINCT p2.divipolepreconteo_id) as mesas_informadas
+        FROM preconteos as p2
+        INNER JOIN divipolepreconteos as dp2 ON p2.divipolepreconteo_id = dp2.id
+        INNER JOIN preconteo_votaciones as pv2 ON p2.id = pv2.preconteo_id
+        INNER JOIN preconteocandidatos as pc2 ON pv2.preconteocandidato_id = pc2.id
+        WHERE pc2.corporacione_id = $corporacione_id $filtro_mesas_informadas");
+
+        $total_mesas = (count($total_mesas_result) > 0) ? $total_mesas_result[0]->total_mesas : 0;
+        $mesas_informadas = (count($mesas_informadas_result) > 0) ? $mesas_informadas_result[0]->mesas_informadas : 0;
+
+        for($i = 0; $i < count($resultados); $i++){
+            $resultados[$i]->total_mesas = $total_mesas;
+            $resultados[$i]->mesas_informadas = $mesas_informadas;
+        }
 
         $data = array(
             'status' => 'success',
@@ -171,38 +288,65 @@ class PreconteoController extends Controller
         $validator = \Validator::make($request->all(), [
             'divipolepreconteo_id' => 'required',
             'numero_sufragantes' => 'required|numeric',
-            'numero_firmas' => 'required|numeric'
+            'numero_firmas' => 'required|numeric',
+            'preconteo' => 'required|array|min:1',
+            'preconteo.*.preconteocandidato_id' => 'required|numeric',
+            'preconteo.*.total_votos' => 'required|numeric',
+            'observaciones_ids' => 'nullable|array',
+            'observaciones_ids.*' => 'numeric'
         ]);
 
         if($validator->fails()){
             return response()->json($validator->messages(), 200);
         }
 
-        $response_preconteo = array();
+        $response_preconteo = null;
+        $response_votaciones = array();
+        $response_observaciones = array();
 
-        for ($i=0; $i < count($request->preconteo); $i++) { 
-
+        DB::transaction(function () use ($request, &$response_preconteo, &$response_votaciones, &$response_observaciones) {
             $preconteo = new Preconteo();
             $preconteo->divipolepreconteo_id = $request->divipolepreconteo_id;
-            $preconteo->preconteocandidato_id = $request->preconteo[$i]['preconteocandidato_id'];
             $preconteo->numero_sufragantes = $request->numero_sufragantes;
-            $preconteo->total_votos = $request->preconteo[$i]['total_votos'];
             $preconteo->numero_firmas = $request->numero_firmas;
+            $preconteo->numero_incinerados = $request->numero_incinerados;
             $preconteo->tachaduras = $request->tachaduras;
             $preconteo->reconteo_votos = $request->reconteo_votos;
             $preconteo->observaciones = $request->observaciones;
+            $preconteo->adjunto = $request->adjunto;
             $preconteo->user_id = Auth::user()->id;
-
             $preconteo->save();
-            
-            $response_preconteo[$i] = $preconteo;
 
-        }
+            for ($i=0; $i < count($request->preconteo); $i++) {
+                $votacion = new Preconteo_votacione();
+                $votacion->preconteo_id = $preconteo->id;
+                $votacion->preconteocandidato_id = $request->preconteo[$i]['preconteocandidato_id'];
+                $votacion->total_votos = $request->preconteo[$i]['total_votos'];
+                $votacion->save();
+
+                $response_votaciones[$i] = $votacion;
+            }
+
+            if(!empty($request->observaciones_ids) && is_array($request->observaciones_ids)){
+                for ($i=0; $i < count($request->observaciones_ids); $i++) {
+                    $observacion = new Preconteo_observacione();
+                    $observacion->preconteo_id = $preconteo->id;
+                    $observacion->observacione_id = $request->observaciones_ids[$i];
+                    $observacion->save();
+
+                    $response_observaciones[$i] = $observacion;
+                }
+            }
+
+            $response_preconteo = $preconteo;
+        });
 
         $data = array(
             'status' => 'success',
             'code' => 200,
-            'preconteo' => $response_preconteo
+            'preconteo' => $response_preconteo,
+            'votaciones' => $response_votaciones,
+            'preconteo_observaciones' => $response_observaciones
         );
 
         return response()->json($data, $data['code']);
@@ -214,40 +358,72 @@ class PreconteoController extends Controller
         $validator = \Validator::make($request->all(), [
             'divipolepreconteo_id' => 'required',
             'numero_sufragantes' => 'required|numeric',
-            'numero_firmas' => 'required|numeric'
+            'numero_firmas' => 'required|numeric',
+            'preconteo' => 'required|array|min:1',
+            'preconteo.*.preconteocandidato_id' => 'required|numeric',
+            'preconteo.*.total_votos' => 'required|numeric',
+            'observaciones_ids' => 'nullable|array',
+            'observaciones_ids.*' => 'numeric'
         ]);
 
         if($validator->fails()){
             return response()->json($validator->messages(), 200);
         }
 
-        $response_preconteo = array();
+        $response_preconteo = null;
+        $response_votaciones = array();
+        $response_observaciones = array();
 
-        $delete_preconteo = Preconteo::where('divipolepreconteo_id', $request->divipolepreconteo_id)->delete();
+        DB::transaction(function () use ($request, &$response_preconteo, &$response_votaciones, &$response_observaciones) {
+            $preconteo = Preconteo::where('divipolepreconteo_id', $request->divipolepreconteo_id)->first();
 
-        for ($i=0; $i < count($request->preconteo); $i++) {
+            if(empty($preconteo)){
+                $preconteo = new Preconteo();
+                $preconteo->divipolepreconteo_id = $request->divipolepreconteo_id;
+            }
 
-            $preconteo = new Preconteo();
-            $preconteo->divipolepreconteo_id = $request->divipolepreconteo_id;
-            $preconteo->preconteocandidato_id = $request->preconteo[$i]['preconteocandidato_id'];
             $preconteo->numero_sufragantes = $request->numero_sufragantes;
-            $preconteo->total_votos = $request->preconteo[$i]['total_votos'];
-            $preconteo->numero_firmas = $request->numero_firmas;
+            $preconteo->numero_incinerados = $request->numero_incinerados;
             $preconteo->tachaduras = $request->tachaduras;
             $preconteo->reconteo_votos = $request->reconteo_votos;
             $preconteo->observaciones = $request->observaciones;
+            $preconteo->adjunto = $request->adjunto;
             $preconteo->user_id = Auth::user()->id;
-
             $preconteo->save();
-            
-            $response_preconteo[$i] = $preconteo;
 
-        }
+            Preconteo_votacione::where('preconteo_id', $preconteo->id)->delete();
+            Preconteo_observacione::where('preconteo_id', $preconteo->id)->delete();
+
+            for ($i=0; $i < count($request->preconteo); $i++) {
+                $votacion = new Preconteo_votacione();
+                $votacion->preconteo_id = $preconteo->id;
+                $votacion->preconteocandidato_id = $request->preconteo[$i]['preconteocandidato_id'];
+                $votacion->total_votos = $request->preconteo[$i]['total_votos'];
+                $votacion->save();
+
+                $response_votaciones[$i] = $votacion;
+            }
+
+            if(!empty($request->observaciones_ids) && is_array($request->observaciones_ids)){
+                for ($i=0; $i < count($request->observaciones_ids); $i++) {
+                    $observacion = new Preconteo_observacione();
+                    $observacion->preconteo_id = $preconteo->id;
+                    $observacion->observacione_id = $request->observaciones_ids[$i];
+                    $observacion->save();
+
+                    $response_observaciones[$i] = $observacion;
+                }
+            }
+
+            $response_preconteo = $preconteo;
+        });
 
         $data = array(
             'status' => 'success',
             'code' => 200,
-            'preconteo' => $response_preconteo
+            'preconteo' => $response_preconteo,
+            'votaciones' => $response_votaciones,
+            'preconteo_observaciones' => $response_observaciones
         );
 
         return response()->json($data, $data['code']);
@@ -256,11 +432,22 @@ class PreconteoController extends Controller
 
     public function votacion_mesa($id){
 
-        $votacion = DB::select("SELECT dp.cod_dpto, dp.cod_mcpio, dp.dpto, dp.mcpio, dp.cod_zona, dp.cod_puesto, dp.puesto, dp.mesa, pc.nombres, pc.apellidos, p.* FROM preconteos AS p
+        $votacion = DB::select("SELECT dp.cod_dpto, dp.cod_mcpio, dp.dpto, dp.mcpio, dp.cod_zona, dp.cod_puesto, dp.puesto, dp.mesa, pc.nombres, pc.apellidos, pv.preconteocandidato_id, pv.total_votos,
+        (SELECT GROUP_CONCAT(po.observacione_id ORDER BY po.observacione_id ASC)
+            FROM preconteo_observaciones as po
+            WHERE po.preconteo_id = p.id
+        ) as observaciones_ids,
+        (SELECT GROUP_CONCAT(o.observacion ORDER BY po2.observacione_id ASC SEPARATOR ' | ')
+            FROM preconteo_observaciones as po2
+            INNER JOIN observaciones as o ON po2.observacione_id = o.id
+            WHERE po2.preconteo_id = p.id
+        ) as observaciones_preconteo,
+        p.* FROM preconteos AS p
         INNER JOIN divipolepreconteos as dp ON p.divipolepreconteo_id = dp.id
-        INNER JOIN preconteocandidatos as pc ON p.preconteocandidato_id = pc.id
+        INNER JOIN preconteo_votaciones as pv ON p.id = pv.preconteo_id
+        INNER JOIN preconteocandidatos as pc ON pv.preconteocandidato_id = pc.id
         WHERE p.divipolepreconteo_id = $id
-        ORDER BY p.total_votos DESC");
+        ORDER BY pv.total_votos DESC");
 
         $data = array(
             'status' => 'success',

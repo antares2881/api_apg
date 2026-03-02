@@ -11,7 +11,6 @@ class Divipolepreconteo extends Model
     use HasFactory;
 
     public function preconteo(){
-        
-        return $this->hasMany(Preconteo::class, 'divipolepreconteo_id');
+        return $this->hasOne(Preconteo::class, 'divipolepreconteo_id');
     }
 }

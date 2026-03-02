@@ -22,7 +22,11 @@ class DivipolepreconteoController extends Controller
         LEFT JOIN preconteos as p ON dp.id = p.divipolepreconteo_id
         WHERE dp.cod_dpto = $dpto AND dp.cod_mcpio = $mcpio AND dp.cod_zona = '".$zona."' AND dp.cod_puesto = '".$puesto."' "); */
 
-        $mesas = Divipolepreconteo::with('preconteo')
+        $mesas = Divipolepreconteo::with([
+            'preconteo',
+            'preconteo.preconteo_votaciones',
+            'preconteo.preconteo_observaciones',
+        ])
         ->where([
             'cod_dpto' => $dpto,
             'cod_mcpio' => $mcpio,
@@ -41,7 +45,7 @@ class DivipolepreconteoController extends Controller
 
     public function municipios_divipoles($dpto){
 
-        $municipios = DB::select("SELECT dp.cod_mcpio, dp.mcpio, COUNT(dp.puesto) as total_mesas,
+        $municipios = DB::select("SELECT dp.cod_mcpio, dp.mcpio, COUNT(DISTINCT dp.id) as total_mesas,
         COUNT(DISTINCT p.divipolepreconteo_id) as mesas_informadas
         FROM divipolepreconteos as dp
         LEFT JOIN preconteos as p ON p.divipolepreconteo_id = dp.id
@@ -59,7 +63,7 @@ class DivipolepreconteoController extends Controller
 
     public function puestos_divipoles($dpto, $mcpio){
 
-        $puestos = DB::select("SELECT dp.cod_mcpio, dp.mcpio, dp.cod_zona, dp.cod_puesto, dp.puesto, COUNT(dp.puesto) as total_mesas,
+        $puestos = DB::select("SELECT dp.cod_mcpio, dp.mcpio, dp.cod_zona, dp.cod_puesto, dp.puesto, COUNT(DISTINCT dp.id) as total_mesas,
         COUNT(DISTINCT p.divipolepreconteo_id) as mesas_informadas
         FROM divipolepreconteos as dp
         LEFT JOIN preconteos as p ON p.divipolepreconteo_id = dp.id
