@@ -210,6 +210,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('preconteo-puestos-informados/{dpto}/{mcpio}', [PreconteoController::class, 'puestos_informados']);
     Route::post('preconteo-mostrar-mesas', [PreconteoController::class, 'mesas_informadas']);
     Route::get('preconteo-votacion-mesa/{id}', [PreconteoController::class, 'votacion_mesa']);
+    Route::get('preconteo-observaciones/{id}', [PreconteoController::class, 'observaciones']);
     Route::get('preconteo-mesas-faltantes/{dpto}', [PreconteoController::class, 'mesas_faltantes_dpto']);
     Route::get('preconteo-mesas-faltantes/{dpto}/{mcpio}', [PreconteoController::class, 'mesas_faltantes_mcpio']);
     Route::post('preconteo-mesas-faltantes', [PreconteoController::class, 'mesas_faltantes_puesto']);

@@ -90,8 +90,11 @@ class ListadovotanteController extends Controller
         $votante->sublidere_id = ($request->sublidere_id) ? $request->sublidere_id : 0;
         
         if(count($repetido) > 0){
+            Listadovotante::where('id', $request->cedula)->update([
+                'observacione_id' => 4
+            ]);
             $votante->observacione_id = 4;
-
+            
         }else{
             $votante->observacione_id = $request->observacione_id;
         }
@@ -171,11 +174,20 @@ class ListadovotanteController extends Controller
             $votantes_old = Listadovotante::find($cedula)->delete();
         }
 
+        $repetido = Listadovotante::where('id', $cedula)->count();
+
         $votante = new Listadovotante();
         $votante->id = $cedula;
         $votante->lidere_id = $request->lidere_id;
         $votante->sublidere_id = ($request->sublidere_id) ? $request->sublidere_id : 0;
-        $votante->observacione_id = 1;
+        if($repetido > 0){
+            Listadovotante::where('id', $cedula)->update([
+                'observacione_id' => 4
+            ]);
+            $votante->observacione_id = 4;
+        }else{
+            $votante->observacione_id = 1;
+        }
         $votante->candidato_id = Auth::user()->candidato_id;    
         $votante->comuna = $request->comuna;
         $votante->nombres = $request->nombres;

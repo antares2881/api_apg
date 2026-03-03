@@ -457,4 +457,29 @@ class PreconteoController extends Controller
 
         return response()->json($data, $data['code']);
     }
+
+    public function observaciones($id){
+
+        $observaciones = DB::select("SELECT p.*, dp.*, po.observacione_id, pv.*
+        FROM preconteos as p
+        INNER JOIN divipolepreconteos as dp ON p.divipolepreconteo_id = dp.id
+        INNER JOIN preconteo_observaciones as po ON p.id = po.preconteo_id
+        INNER JOIN (
+            SELECT MAX(id) as id, preconteo_id
+            FROM preconteo_votaciones
+            GROUP BY preconteo_id
+        ) as pv_u ON p.id = pv_u.preconteo_id
+        INNER JOIN preconteo_votaciones as pv ON pv_u.id = pv.id
+        INNER JOIN observaciones as o ON po.observacione_id = o.id
+        INNER JOIN preconteocandidatos as pc ON pv.preconteocandidato_id = pc.id
+        WHERE po.observacione_id = ?", [$id]);
+
+        $data = array(
+            'status' => 'success',
+            'code' => 200,
+            'observaciones' => $observaciones
+        );
+
+        return response()->json($data, $data['code']);
+    }
 }
