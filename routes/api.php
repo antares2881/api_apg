@@ -64,7 +64,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     //Asistencia
     Route::get('asistencia/{ced}', [AsistenciaController::class, 'verificarAsistencia']);
     Route::post('dar_asistencia', [AsistenciaController::class, 'DarAsistencia']);
-    Route::get('asistentes-comandos/{comando_id}', [AsistenciaController::class, 'asistenciaComandos']);
+    Route::get('asistentes-comandos/{comando_id?}', [AsistenciaController::class, 'asistenciaComandos']);
     Route::post('votantes-confirmados', [AsistenciaController::class, 'votantes_confirmados']);
     Route::post('votantes-faltantes', [AsistenciaController::class, 'votantes_faltantes']);
 
@@ -119,7 +119,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     
 
     //Divipoles
-    Route::get('puestos_divipoles/{dpto}/{mcpio}/{comando_id}', [DivipoleController::class, 'puestos_divipoles']);
+    Route::get('puestos_divipoles/{dpto}/{mcpio}/{lidere_id}', [DivipoleController::class, 'puestos_divipoles']);
     Route::post('divipoles', [DivipoleController::class, 'index']);
     
     //Divipole preconteos
@@ -210,7 +210,9 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('preconteo-puestos-informados/{dpto}/{mcpio}', [PreconteoController::class, 'puestos_informados']);
     Route::post('preconteo-mostrar-mesas', [PreconteoController::class, 'mesas_informadas']);
     Route::get('preconteo-votacion-mesa/{id}', [PreconteoController::class, 'votacion_mesa']);
-    Route::get('preconteo-observaciones/{id}', [PreconteoController::class, 'observaciones']);
+    Route::get('preconteo-observaciones/excel', [PreconteoController::class, 'observaciones'])->defaults('tipo', 'excel');
+    Route::get('preconteo-observaciones/{id}/excel', [PreconteoController::class, 'observaciones'])->defaults('tipo', 'excel');
+    Route::get('preconteo-observaciones/{id?}', [PreconteoController::class, 'observaciones']);
     Route::get('preconteo-mesas-faltantes/{dpto}', [PreconteoController::class, 'mesas_faltantes_dpto']);
     Route::get('preconteo-mesas-faltantes/{dpto}/{mcpio}', [PreconteoController::class, 'mesas_faltantes_mcpio']);
     Route::post('preconteo-mesas-faltantes', [PreconteoController::class, 'mesas_faltantes_puesto']);

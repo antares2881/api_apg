@@ -61,7 +61,7 @@ class DivipolepreconteoController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    public function puestos_divipoles($dpto, $mcpio){
+    public function puestos_divipoles($dpto, $mcpio, $lider){
 
         $puestos = DB::select("SELECT dp.cod_mcpio, dp.mcpio, dp.cod_zona, dp.cod_puesto, dp.puesto, COUNT(DISTINCT dp.id) as total_mesas,
         COUNT(DISTINCT p.divipolepreconteo_id) as mesas_informadas

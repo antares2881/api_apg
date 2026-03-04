@@ -21,6 +21,11 @@ class ListadovotanteController extends Controller
     public function index(){
         if(Auth::user()->role_id == 1){
             $listadovotantes = Listadovotante::with('lider')->where('observacione_id', 1)->get();
+            /* $listadovotantes = DB::select('SELECT lv.departamento_id, d.departamento
+                FROM listadovotantes as lv 
+                INNER JOIN departamentos as d ON lv.departamento_id = d.id
+                WHERE lv.observacione_id = 1
+                GROUP BY lv.departamento_id, d.departamento', [1]); */
         }else{
             $listadovotantes = Listadovotante::with('lider')->where('candidato_id', Auth::user()->candidato_id)->where('observacione_id', 1)->get();
         }
@@ -868,38 +873,40 @@ class ListadovotanteController extends Controller
         $role_id = Auth::user()->role_id;
         $user_id = Auth::user()->id;
         
-        $condicion_adicional = "";
+        $condicion_join = "";
+        $condicion_where = "";
+        $bindings = [$candidato_id];
         
         // Si es coordinador (role_id = 6), solo mostrar votantes de su coordinación
         if($role_id == 6){
-            $condicion_adicional = "INNER JOIN lideres as l ON lv.lidere_id = l.id
-                                    INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
-                                    AND c.id = $user_id";
+            $condicion_join = "INNER JOIN lideres as l ON lv.lidere_id = l.id
+                               INNER JOIN coordinadores as c ON l.coordinadore_id = c.id";
+            $condicion_where = "AND c.id = ?";
+            $bindings[] = $user_id;
         }
         // Si es líder (role_id = 5), solo mostrar sus votantes
         elseif($role_id == 5){
-            $condicion_adicional = "AND lv.lidere_id = $user_id";
+            $condicion_where = "AND lv.lidere_id = ?";
+            $bindings[] = $user_id;
         }
 
         $votantes_por_dpto = DB::select("SELECT 
             d.id as departamento_id,
             d.departamento,
-            COUNT(lv.id) as total_votantes,
-            SUM(CASE WHEN lv.observacione_id = 1 THEN 1 ELSE 0 END) as votantes_confirmados,
-            SUM(CASE WHEN lv.observacione_id = 4 THEN 1 ELSE 0 END) as votantes_repetidos,
-            SUM(CASE WHEN lv.observacione_id NOT IN (1,4) THEN 1 ELSE 0 END) as otros_estados
+            COUNT(lv.id) as votantes_confirmados
             FROM listadovotantes as lv 
             INNER JOIN departamentos as d ON lv.departamento_id = d.id
-            $condicion_adicional
+            $condicion_join
             WHERE lv.candidato_id = ? AND lv.observacione_id = 1
+            $condicion_where
             GROUP BY d.id, d.departamento
-            ORDER BY total_votantes DESC", [$candidato_id]);
+            ORDER BY votantes_confirmados DESC", $bindings);
 
         $data = array(
             'status' => 'success',
             'code' => 200,
             'votantes_por_departamento' => $votantes_por_dpto,
-            'total_general' => array_sum(array_column($votantes_por_dpto, 'total_votantes'))
+            'total_general' => array_sum(array_column($votantes_por_dpto, 'votantes_confirmados'))
         );
 
         return response()->json($data, $data['code']);
@@ -911,39 +918,41 @@ class ListadovotanteController extends Controller
         $role_id = Auth::user()->role_id;
         $user_id = Auth::user()->id;
         
-        $condicion_adicional = "";
+        $condicion_join = "";
+        $condicion_where = "";
+        $bindings = [$candidato_id, $dpto_id];
         
         // Si es coordinador (role_id = 6), solo mostrar votantes de su coordinación
         if($role_id == 6){
-            $condicion_adicional = "INNER JOIN lideres as l ON lv.lidere_id = l.id
-                                    INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
-                                    AND c.id = $user_id";
+            $condicion_join = "INNER JOIN lideres as l ON lv.lidere_id = l.id
+                               INNER JOIN coordinadores as c ON l.coordinadore_id = c.id";
+            $condicion_where = "AND c.id = ?";
+            $bindings[] = $user_id;
         }
         // Si es líder (role_id = 5), solo mostrar sus votantes
         elseif($role_id == 5){
-            $condicion_adicional = "AND lv.lidere_id = $user_id";
+            $condicion_where = "AND lv.lidere_id = ?";
+            $bindings[] = $user_id;
         }
 
         $votantes_por_mcpio = DB::select("SELECT 
             m.id as municipio_id,
             m.municipio,
-            COUNT(lv.id) as total_votantes,
-            SUM(CASE WHEN lv.observacione_id = 1 THEN 1 ELSE 0 END) as votantes_confirmados,
-            SUM(CASE WHEN lv.observacione_id = 4 THEN 1 ELSE 0 END) as votantes_repetidos,
-            SUM(CASE WHEN lv.observacione_id NOT IN (1,4) THEN 1 ELSE 0 END) as otros_estados
+            COUNT(lv.id) as votantes_confirmados
             FROM listadovotantes as lv 
             INNER JOIN departamentos as d ON lv.departamento_id = d.id
             INNER JOIN municipios as m ON lv.departamento_id = m.departamento_id AND lv.municipio_id = m.id
-            $condicion_adicional
+            $condicion_join
             WHERE lv.candidato_id = ? AND lv.departamento_id = ? AND lv.observacione_id = 1
+            $condicion_where
             GROUP BY m.id, m.municipio
-            ORDER BY total_votantes DESC", [$candidato_id, $dpto_id]);
+            ORDER BY votantes_confirmados DESC", $bindings);
 
         $data = array(
             'status' => 'success',
             'code' => 200,
             'votantes_por_municipio' => $votantes_por_mcpio,
-            'total_general' => array_sum(array_column($votantes_por_mcpio, 'total_votantes'))
+            'total_general' => array_sum(array_column($votantes_por_mcpio, 'votantes_confirmados'))
         );
 
         return response()->json($data, $data['code']);
@@ -955,48 +964,48 @@ class ListadovotanteController extends Controller
         $role_id = Auth::user()->role_id;
         $user_id = Auth::user()->id;
         
-        $condicion_adicional = "";
+        $condicion_join = "";
+        $condicion_where = "";
+        $bindings = [$candidato_id, $dpto_id, $mcpio_id];
         
         // Si es coordinador (role_id = 6), solo mostrar votantes de su coordinación
         if($role_id == 6){
-            $condicion_adicional = "INNER JOIN lideres as l ON lv.lidere_id = l.id
-                                    INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
-                                    AND c.id = $user_id";
+            $condicion_join = "INNER JOIN lideres as l ON lv.lidere_id = l.id
+                               INNER JOIN coordinadores as c ON l.coordinadore_id = c.id";
+            $condicion_where = "AND c.id = ?";
+            $bindings[] = $user_id;
         }
         // Si es líder (role_id = 5), solo mostrar sus votantes
         elseif($role_id == 5){
-            $condicion_adicional = "AND lv.lidere_id = $user_id";
+            $condicion_where = "AND lv.lidere_id = ?";
+            $bindings[] = $user_id;
         }
 
         if($mcpio_id == 1){
             $votantes_por_mcpio = DB::select("SELECT 
             lv.comuna, lv.nombre_puesto,
-            COUNT(lv.id) as total_votantes,
-            SUM(CASE WHEN lv.observacione_id = 1 THEN 1 ELSE 0 END) as votantes_confirmados,
-            SUM(CASE WHEN lv.observacione_id = 4 THEN 1 ELSE 0 END) as votantes_repetidos,
-            SUM(CASE WHEN lv.observacione_id NOT IN (1,4) THEN 1 ELSE 0 END) as otros_estados
+            COUNT(lv.id) as votantes_confirmados
             FROM listadovotantes as lv 
             INNER JOIN departamentos as d ON lv.departamento_id = d.id
             INNER JOIN municipios as m ON lv.departamento_id = m.departamento_id AND lv.municipio_id = m.id
-            $condicion_adicional
-            WHERE lv.candidato_id = ? AND lv.departamento_id = ? AND lv.municipio_id = ?
+            $condicion_join
+            WHERE lv.candidato_id = ? AND lv.departamento_id = ? AND lv.municipio_id = ? AND lv.observacione_id = 1
+            $condicion_where
             GROUP BY lv.comuna, lv.nombre_puesto
-            ORDER BY lv.comuna ASC, total_votantes DESC", [$candidato_id, $dpto_id, $mcpio_id]);
+            ORDER BY lv.comuna ASC, votantes_confirmados DESC", $bindings);
         }else{
             
         $votantes_por_mcpio = DB::select("SELECT 
             lv.nombre_puesto,
-            COUNT(lv.id) as total_votantes,
-            SUM(CASE WHEN lv.observacione_id = 1 THEN 1 ELSE 0 END) as votantes_confirmados,
-            SUM(CASE WHEN lv.observacione_id = 4 THEN 1 ELSE 0 END) as votantes_repetidos,
-            SUM(CASE WHEN lv.observacione_id NOT IN (1,4) THEN 1 ELSE 0 END) as otros_estados
+            COUNT(lv.id) as votantes_confirmados
             FROM listadovotantes as lv 
             INNER JOIN departamentos as d ON lv.departamento_id = d.id
             INNER JOIN municipios as m ON lv.departamento_id = m.departamento_id AND lv.municipio_id = m.id
-            $condicion_adicional
-            WHERE lv.candidato_id = ? AND lv.departamento_id = ? AND lv.municipio_id = ?
+            $condicion_join
+            WHERE lv.candidato_id = ? AND lv.departamento_id = ? AND lv.municipio_id = ? AND lv.observacione_id = 1
+            $condicion_where
             GROUP BY lv.nombre_puesto
-            ORDER BY total_votantes DESC", [$candidato_id, $dpto_id, $mcpio_id]);
+            ORDER BY votantes_confirmados DESC", $bindings);
         }
 
 
@@ -1004,7 +1013,7 @@ class ListadovotanteController extends Controller
             'status' => 'success',
             'code' => 200,
             'votantes_por_municipio' => $votantes_por_mcpio,
-            'total_general' => array_sum(array_column($votantes_por_mcpio, 'total_votantes'))
+            'total_general' => array_sum(array_column($votantes_por_mcpio, 'votantes_confirmados'))
         );
 
         return response()->json($data, $data['code']);

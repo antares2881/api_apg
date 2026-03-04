@@ -13,20 +13,21 @@ use App\Models\Asistencia;
 
 class AsistenciaController extends Controller
 {
-    public function asistenciaComandos($comando_id){
+    public function asistenciaComandos($comando_id = null){
 
         $condicion_comando = "";
+        $bindings = [];
         
-        if(Auth::user()->role_id > 2){
-            
-            $condicion_comando = "WHERE a.comando_id = $comando_id";
+        if(Auth::user()->role_id > 2 && !is_null($comando_id)){
+            $condicion_comando = "WHERE a.comando_id = ?";
+            $bindings[] = (int) $comando_id;
         }
 
         $asistencia_comandos = DB::select("SELECT c.id, c.nombre, c.proyectados, COUNT(a.comando_id) as confirmados, c.contacto
             FROM comandos as c 
             LEFT JOIN asistencias as a ON a.comando_id = c.id 
             $condicion_comando
-            GROUP BY c.id, c.nombre, c.proyectados, c.contacto");
+            GROUP BY c.id, c.nombre, c.proyectados, c.contacto", $bindings);
             
         $data = array(
             'status' => 'success',

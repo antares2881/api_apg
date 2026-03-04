@@ -458,21 +458,36 @@ class PreconteoController extends Controller
         return response()->json($data, $data['code']);
     }
 
-    public function observaciones($id){
+    public function observaciones(Request $request, $id = null, $tipo = null){
 
-        $observaciones = DB::select("SELECT p.*, dp.*, po.observacione_id, pv.*
+        if($id === 'null' || $id === 'undefined' || $id === ''){
+            $id = null;
+        }
+
+        if($id === 'excel' && is_null($tipo)){
+            $tipo = 'excel';
+            $id = null;
+        }
+
+        $sql = "SELECT p.*, dp.*, po.observacione_id, o.observacion, tv.total_votos
         FROM preconteos as p
         INNER JOIN divipolepreconteos as dp ON p.divipolepreconteo_id = dp.id
         INNER JOIN preconteo_observaciones as po ON p.id = po.preconteo_id
-        INNER JOIN (
-            SELECT MAX(id) as id, preconteo_id
+        INNER JOIN observaciones as o ON po.observacione_id = o.id
+        LEFT JOIN (
+            SELECT preconteo_id, SUM(total_votos) as total_votos
             FROM preconteo_votaciones
             GROUP BY preconteo_id
-        ) as pv_u ON p.id = pv_u.preconteo_id
-        INNER JOIN preconteo_votaciones as pv ON pv_u.id = pv.id
-        INNER JOIN observaciones as o ON po.observacione_id = o.id
-        INNER JOIN preconteocandidatos as pc ON pv.preconteocandidato_id = pc.id
-        WHERE po.observacione_id = ?", [$id]);
+        ) as tv ON p.id = tv.preconteo_id
+        ";
+
+        $bindings = [];
+        if(!is_null($id) && $id !== ''){
+            $sql .= " WHERE po.observacione_id = ?";
+            $bindings[] = $id;
+        }
+
+        $observaciones = DB::select($sql, $bindings);
 
         $data = array(
             'status' => 'success',
@@ -480,6 +495,61 @@ class PreconteoController extends Controller
             'observaciones' => $observaciones
         );
 
-        return response()->json($data, $data['code']);
+        $esExcelPorRuta = ($tipo === 'excel');
+
+        if(!$esExcelPorRuta && ($request->ajax() || $request->expectsJson() || $request->wantsJson())){
+            return response()->json($data, $data['code']);
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Observaciones');
+
+        $encabezados = [
+            'Departamento',
+            'Municipio',
+            'Puesto',
+            'Mesa',
+            'Tiene tachaduras',
+            'Tiene enmendaduras',
+            'Reconteo de votos',
+            'Numero de firmas',
+            'Numero de sufragantes',
+            'Total votos',
+            'Observacion',
+            'Observaciones'
+        ];
+
+        $sheet->fromArray($encabezados, null, 'A1');
+
+        $fila = 2;
+        foreach ($observaciones as $item) {
+            $sheet->setCellValue("A{$fila}", $item->dpto ?? '');
+            $sheet->setCellValue("B{$fila}", $item->mcpio ?? '');
+            $sheet->setCellValue("C{$fila}", $item->puesto ?? '');
+            $sheet->setCellValue("D{$fila}", $item->mesa ?? '');
+            $sheet->setCellValue("E{$fila}", $item->tachaduras ?? '');
+            $sheet->setCellValue("F{$fila}", $item->tachaduras );
+            $sheet->setCellValue("G{$fila}", $item->reconteo_votos ?? '');
+            $sheet->setCellValue("H{$fila}", $item->numero_firmas ?? '');
+            $sheet->setCellValue("I{$fila}", $item->numero_sufragantes ?? '');
+            $sheet->setCellValue("J{$fila}", $item->total_votos ?? '');
+            $sheet->setCellValue("K{$fila}", $item->observacione_id ?? '');
+            $sheet->setCellValue("L{$fila}", $item->observacion ?? '');
+            $fila++;
+        }
+
+        foreach (range('A', 'L') as $columna) {
+            $sheet->getColumnDimension($columna)->setAutoSize(true);
+        }
+
+        $filename = 'observaciones_'.time().'.xlsx';
+        $writer = new Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 }
