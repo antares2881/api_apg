@@ -685,9 +685,8 @@ class ListadovotanteController extends Controller
 
     public function votantes_confirmados(){
 
-        $votantes = DB::select("SELECT l.nombres as nombre_lider, l.apellidos as ape_lider, l.telefono as telefono_lider, a.*, c.nombre
+        $votantes = DB::select("SELECT l.nombres as nombre_lider, l.apellidos as ape_lider, l.telefono as telefono_lider, a.*
             FROM asistencias AS a
-            INNER JOIN comandos as c ON a.comando_id = c.id
             LEFT JOIN lideres as l ON a.lidere_id = l.id
             ORDER BY created_at ASC
         ");
@@ -703,8 +702,7 @@ class ListadovotanteController extends Controller
             $sheet->setCellValue("C$fila", $votantes[$i]->nombres);
             $sheet->setCellValue("D$fila", $votantes[$i]->mesa);
             $sheet->setCellValue("E$fila", $votantes[$i]->observacion);
-            $sheet->setCellValue("F$fila", $votantes[$i]->nombre);
-            $sheet->setCellValue("G$fila", $votantes[$i]->created_at);
+            $sheet->setCellValue("F$fila", $votantes[$i]->created_at);
             $fila++;
         }
 
