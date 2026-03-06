@@ -600,13 +600,18 @@ class ListadovotanteController extends Controller
         return $votantes;
     }
 
-    public function votantes_confirmados_puesto($dpto, $mcpio, $zona, $puesto, $nombre_puesto, $comando){
+    public function votantes_confirmados_puesto($dpto, $mcpio, $zona, $puesto, $nombre_puesto, $role_id, $lidere_id = null){
 
-        $votantes = DB::select("SELECT l.nombres as nombre_lider, l.apellidos as ape_lider, l.telefono as telefono_lider, a.*, c.nombre
+        $condicion_lider = "";
+        if($role_id == 5){
+            $lider_id = (int) $lidere_id;
+            $condicion_lider = " AND a.lidere_id = $lider_id";
+        }
+
+        $votantes = DB::select("SELECT l.nombres as nombre_lider, l.apellidos as ape_lider, l.telefono as telefono_lider, a.*
             FROM asistencias AS a
-            INNER JOIN comandos as c ON a.comando_id = c.id
             LEFT JOIN lideres as l ON a.lidere_id = l.id
-            WHERE a.departamento_id = $dpto AND a.municipio_id = $mcpio AND a.zona = '" .$zona. "' AND a.puesto = '" .$puesto. "' AND a.comando_id = $comando
+            WHERE a.departamento_id = $dpto AND a.municipio_id = $mcpio AND a.zona = '" .$zona. "' AND a.puesto = '" .$puesto. "' $condicion_lider
             ORDER BY created_at ASC
         ");
 
@@ -621,8 +626,7 @@ class ListadovotanteController extends Controller
             $sheet->setCellValue("C$fila", $votantes[$i]->nombres);
             $sheet->setCellValue("D$fila", $votantes[$i]->mesa);
             $sheet->setCellValue("E$fila", $votantes[$i]->observacion);
-            $sheet->setCellValue("F$fila", $votantes[$i]->nombre);
-            $sheet->setCellValue("G$fila", $votantes[$i]->created_at);
+            $sheet->setCellValue("F$fila", $votantes[$i]->created_at);
             $fila++;
         }
 
@@ -636,13 +640,19 @@ class ListadovotanteController extends Controller
         
     }
 
-    public function votantes_esperados_puesto($dpto, $mcpio, $zona, $puesto, $nombre_puesto){
+    public function votantes_esperados_puesto($dpto, $mcpio, $zona, $puesto, $nombre_puesto, $role_id, $lidere_id = null){
+
+        $condicion_lider = "";
+        if($role_id == 5){
+            $lider_id = (int) $lidere_id;
+            $condicion_lider = " AND lv.lidere_id = $lider_id";
+        }
 
         $votantes = DB::select("SELECT DISTINCT lv.id, c.nombres as nombre_coordinador, c.apellidos as ape_coordinador, c.telefono as telefono_coordinador, lv.nombres, lv.apellidos, lv.telefono, l.nombres as nombre_lider, l.apellidos as ape_lider, l.telefono as telefono_lider, lv.*
             FROM listadovotantes AS lv 
             INNER JOIN lideres as l ON lv.lidere_id = l.id
             INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
-            WHERE lv.departamento_id = $dpto AND lv.municipio_id = $mcpio AND lv.zona = '" .$zona. "' AND lv.puesto = '" .$puesto. "' AND lv.observacione_id = 1
+            WHERE lv.departamento_id = $dpto AND lv.municipio_id = $mcpio AND lv.zona = '" .$zona. "' AND lv.puesto = '" .$puesto. "' AND lv.observacione_id = 1 $condicion_lider
             ORDER BY nombre_lider ASC
         ");
 
@@ -708,13 +718,19 @@ class ListadovotanteController extends Controller
         
     }
 
-    public function votantes_faltantes($dpto, $mcpio, $zona, $puesto, $nombre_puesto){
+    public function votantes_faltantes($dpto, $mcpio, $zona, $puesto, $nombre_puesto, $role_id, $lidere_id = null){
+
+        $condicion_lider = "";
+        if($role_id == 5){
+            $lider_id = (int) $lidere_id;
+            $condicion_lider = " AND lv.lidere_id = $lider_id";
+        }
 
         $faltantes = DB::select("SELECT c.nombres as nombre_coordinador, c.apellidos as ape_coordinador, c.telefono as tele_coord, lv.*, l.nombres as nombre_lider, l.apellidos as ape_lider, l.telefono as telefono_lider FROM listadovotantes as lv 
         LEFT JOIN asistencias as a ON lv.id = a.cedula 
         INNER JOIN lideres as l ON lv.lidere_id = l.id
         INNER JOIN coordinadores as c ON l.coordinadore_id = c.id
-        WHERE a.cedula IS NULL AND lv.observacione_id = 1 AND lv.departamento_id = $dpto AND lv.municipio_id = $mcpio AND lv.zona = $zona AND lv.puesto = $puesto");
+        WHERE a.cedula IS NULL AND lv.observacione_id = 1 AND lv.departamento_id = $dpto AND lv.municipio_id = $mcpio AND lv.zona = $zona AND lv.puesto = $puesto $condicion_lider");
         $spreadsheet = IOFactory::load('plantillas/reporte_esperados.xlsx');
         $sheet = $spreadsheet->getSheetByName('Hoja1');
         $sheet->setCellValue("B1", $nombre_puesto);

@@ -40,10 +40,10 @@ Route::get('excel-coordinadores/{token}/{coordinador}/{lider}/{sublider?}', [Coo
 	])
 	->defaults('sublider', -1);
 
-route::get('reporte-esperados/{dpto}/{mcpio}/{zona}/{puesto}/{nombre_puesto}', [ListadovotanteController::class, 'votantes_esperados_puesto']);
-route::get('reporte-confirmados/{dpto}/{mcpio}/{zona}/{puesto}/{nombre_puesto}/{comando_id}', [ListadovotanteController::class, 'votantes_confirmados_puesto']);
+route::get('reporte-esperados/{dpto}/{mcpio}/{zona}/{puesto}/{nombre_puesto}/{role_id}/{lidere_id?}', [ListadovotanteController::class, 'votantes_esperados_puesto']);
+route::get('reporte-confirmados/{dpto}/{mcpio}/{zona}/{puesto}/{nombre_puesto}/{role_id}/{lidere_id?}', [ListadovotanteController::class, 'votantes_confirmados_puesto']);
 route::get('total-confirmados', [ListadovotanteController::class, 'votantes_confirmados']);
-Route::get('reporte-faltantes/{dpto}/{mcpio}/{zona}/{puesto}/{nombre_puesto}', [ListadovotanteController::class, 'votantes_faltantes']);
+Route::get('reporte-faltantes/{dpto}/{mcpio}/{zona}/{puesto}/{nombre_puesto}/{role_id}/{lidere_id?}', [ListadovotanteController::class, 'votantes_faltantes']);
 Route::get('reporte-comandos/{id}/{comando}/{role}', [AsistenciaController::class, 'votantes_comando']);
 Route::get('reporte-preconteo-general', [PreconteoController::class, 'preconteo_general']);
 

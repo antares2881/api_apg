@@ -66,7 +66,6 @@ class AsistenciaController extends Controller
         $asistencia->mesa = $request->mesa;
         $asistencia->lidere_id = $request->lidere_id;
         $asistencia->observacion = $request->observacion;
-        $asistencia->comando_id = $request->comando_id;
         $asistencia->user_id = Auth::user()->id;
 
         $asistencia->save();
@@ -83,7 +82,7 @@ class AsistenciaController extends Controller
     public function verificarAsistencia($cedula){
         // $asistencia = Asistencia::where('cedula', $cedula)->get();
 
-        $asistencia = DB::select("SELECT a.*, c.nombre as nombre_comando FROM asistencias as a INNER JOIN comandos as c ON a.comando_id = c.id WHERE cedula = $cedula");
+        $asistencia = DB::select("SELECT a.*, CONCAT(l.nombres, l.apellidos) as lider FROM asistencias as a INNER JOIN lideres as l ON a.lidere_id = l.id WHERE a.cedula = ?", [$cedula]);
 
         $data = array(
             'status' => 'success',
@@ -105,11 +104,11 @@ class AsistenciaController extends Controller
             $condicion = "WHERE a.cedula = $parametro";
         }
                 
-        $votantes = DB::select("SELECT a.*, c.nombre 
+        $votantes = DB::select("SELECT a.*, CONCAT(l.nombres, l.apellidos) as lider 
             FROM asistencias AS a 
-            INNER JOIN comandos as c ON a.comando_id = c.id
+            INNER JOIN lideres as l ON a.lidere_id = l.id
             $condicion
-            ORDER BY c.nombre
+            ORDER BY l.nombres, l.apellidos
         ");
 
         $data = array(

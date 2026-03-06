@@ -308,6 +308,7 @@ class ReportesController extends Controller
         $condicion_subquery = "";
         $condicion_lider = "";
         $usuario = Auth::user();
+        $usuario_id = $usuario->id;
         $candidato = $usuario->candidato_id;
 
         if($corporacion == 5){
@@ -323,20 +324,38 @@ class ReportesController extends Controller
             }else{
                 $condicion_lider = "AND lv.id IN (SELECT id FROM listadovotantes WHERE candidato_id = $candidato AND lidere_id = $lider_id)";
             }
+        }elseif($usuario->role_id == 6){
+            if($condicion_subquery == ""){
+                $condicion_subquery = "WHERE lidere_id IN (SELECT id FROM lideres WHERE coordinadore_id = $usuario_id) ";
+            }else{
+                $condicion_subquery .= "AND lidere_id IN (SELECT id FROM lideres WHERE coordinadore_id = $usuario_id) ";
+            }
+            $condicion_lider = "AND l.coordinadore_id = $usuario_id";
+            $condicion_general = "l.coordinadore_id = $usuario_id AND ";
         }
 
-        $repetidos = DB::select("SELECT lv.id, lv.nombres, lv.apellidos, c.nombres as candidato, l.nombres as nombre_lider, l.apellidos as apellidos_lider, lv.created_at as fecha_ingreso
-            FROM listadovotantes as lv
-            INNER JOIN candidatos as c ON lv.candidato_id = c.id
-            INNER JOIN lideres as l ON lv.lidere_id = l.id
-            WHERE $condicion_general lv.id
-            IN (SELECT id
-            FROM listadovotantes
-            $condicion_subquery
-            GROUP BY id
-            HAVING COUNT(DISTINCT lidere_id) > 1)
-            $condicion_lider
-            ORDER BY lv.id, fecha_ingreso");
+        if($usuario->role_id == 6){
+            $repetidos = DB::select("SELECT lv.id, lv.nombres, lv.apellidos, c.nombres as candidato, l.nombres as nombre_lider, l.apellidos as apellidos_lider, lv.created_at as fecha_ingreso
+                FROM listadovotantes as lv
+                INNER JOIN candidatos as c ON lv.candidato_id = c.id
+                INNER JOIN lideres as l ON lv.lidere_id = l.id
+                WHERE lv.observacione_id = 4
+                AND l.coordinadore_id = ?
+                ORDER BY lv.id, fecha_ingreso", [$usuario_id]);
+        }else{
+            $repetidos = DB::select("SELECT lv.id, lv.nombres, lv.apellidos, c.nombres as candidato, l.nombres as nombre_lider, l.apellidos as apellidos_lider, lv.created_at as fecha_ingreso
+                FROM listadovotantes as lv
+                INNER JOIN candidatos as c ON lv.candidato_id = c.id
+                INNER JOIN lideres as l ON lv.lidere_id = l.id
+                WHERE $condicion_general lv.id
+                IN (SELECT id
+                FROM listadovotantes
+                $condicion_subquery
+                GROUP BY id
+                HAVING COUNT(DISTINCT lidere_id) > 1)
+                $condicion_lider
+                ORDER BY lv.id, fecha_ingreso");
+        }
 
         $data = array(
             'status' => 'success',
