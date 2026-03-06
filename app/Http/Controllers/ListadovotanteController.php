@@ -683,11 +683,20 @@ class ListadovotanteController extends Controller
         
     }
 
-    public function votantes_confirmados(Request $request){
+    public function votantes_confirmados(Request $request, $lidere_id = null){
+
+        $opcion = $request->opcion;
+        $condicion_lider = "";
+
+        if($opcion && !is_null($lidere_id)){
+            $lider_id = (int) $lidere_id;
+            $condicion_lider = "WHERE a.lidere_id = $lider_id";
+        }
 
         $votantes = DB::select("SELECT l.nombres as nombre_lider, l.apellidos as ape_lider, l.telefono as telefono_lider, a.*
             FROM asistencias AS a
             LEFT JOIN lideres as l ON a.lidere_id = l.id
+            $condicion_lider
             ORDER BY created_at ASC
         ");
 
