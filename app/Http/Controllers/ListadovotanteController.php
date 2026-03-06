@@ -683,13 +683,23 @@ class ListadovotanteController extends Controller
         
     }
 
-    public function votantes_confirmados(){
+    public function votantes_confirmados(Request $request){
 
         $votantes = DB::select("SELECT l.nombres as nombre_lider, l.apellidos as ape_lider, l.telefono as telefono_lider, a.*
             FROM asistencias AS a
             LEFT JOIN lideres as l ON a.lidere_id = l.id
             ORDER BY created_at ASC
         ");
+
+        if($request->ajax()){
+            $data = array(
+                'status' => 'success',
+                'code' => 200,
+                'votantes' => $votantes
+            );
+
+            return response()->json($data, $data['code']);
+        }
 
 
         $spreadsheet = IOFactory::load('plantillas/reporte_confirmados.xlsx');
