@@ -167,6 +167,7 @@ Route::group(['middleware' => 'auth:api'], function(){
     Route::get('lideres-ingresados/{id}', [LidereController::class, 'show']);
     Route::post('lideres', [LidereController::class, 'store']);
     Route::put('lideres/{id}', [LidereController::class, 'update']);
+    Route::get('lideres', [LidereController::class, 'get_lideres']);
     
     Route::get('listadovotantes', [ListadovotanteController::class, 'index']);
     Route::post('votantes-repetidos', [ListadovotanteController::class, 'repetidos']);

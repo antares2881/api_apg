@@ -102,6 +102,20 @@ class LidereController extends Controller
         return response()->json($data, $data['code']);
     }
 
+    public function get_lideres(){
+
+       $lideres = Lidere::all();
+
+        $data = array(
+            'status' => 'success',
+            'code' => 200,
+            'lideres' => $lideres
+        );
+
+        return response()->json($data, $data['code']);
+        
+    }
+
     public function getLideresVotantes($id){
 
         $candidato = Auth::user()->candidato_id;
@@ -203,39 +217,39 @@ class LidereController extends Controller
 
     public function store(Request $request){
 
-    if($request->esSublider == 1){
-        
-        //Validar si un lider esta creado
-        $ya_ingresado = Lidere::where([
-            'id' => $request->id,
-            'candidato_id' => $request->candidato_id
-        ])->get();
+        if($request->esSublider == 1){
+            
+            //Validar si un lider esta creado
+            $ya_ingresado = Lidere::where([
+                'id' => $request->id,
+                'candidato_id' => $request->candidato_id
+            ])->get();
 
-        if(count($ya_ingresado) > 0){
-            $data = array(
-                'status' => 'fail',
-                "code" => 200,
-                'error' => "Este lider ya esta creado para este candidato."
-            );
-            return response()->json($data, $data['code']);
-        }
-    }else{
+            if(count($ya_ingresado) > 0){
+                $data = array(
+                    'status' => 'fail',
+                    "code" => 200,
+                    'error' => "Este lider ya esta creado para este candidato."
+                );
+                return response()->json($data, $data['code']);
+            }
+        }else{
         
         //Validar si un sublider esta creado
-        $sub_ya_ingresado = Sublidere::where([
-            'id' => $request->id,
-            'candidato_id' => $request->candidato_id
-        ])->get();
-    
-        if(count($sub_ya_ingresado) > 0){
-            $data = array(
-                'status' => 'fail',
-                "code" => 200,
-                'error' => "Este Sublider ya esta creado para este candidato."
-            );
-            return response()->json($data, $data['code']);
+            $sub_ya_ingresado = Sublidere::where([
+                'id' => $request->id,
+                'candidato_id' => $request->candidato_id
+            ])->get();
+        
+            if(count($sub_ya_ingresado) > 0){
+                $data = array(
+                    'status' => 'fail',
+                    "code" => 200,
+                    'error' => "Este Sublider ya esta creado para este candidato."
+                );
+                return response()->json($data, $data['code']);
+            }
         }
-    }
 
         
         $validator = \Validator::make($request->all(), [
