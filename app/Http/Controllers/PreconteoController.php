@@ -383,6 +383,7 @@ class PreconteoController extends Controller
             }
 
             $preconteo->numero_sufragantes = $request->numero_sufragantes;
+            $preconteo->numero_firmas = $request->numero_firmas;
             $preconteo->numero_incinerados = $request->numero_incinerados;
             $preconteo->tachaduras = $request->tachaduras;
             $preconteo->reconteo_votos = $request->reconteo_votos;
